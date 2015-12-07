@@ -229,16 +229,25 @@ and getFirstMatch lst m j =
 let rec check_rec_f f e =
     match e 
     with ConstExp c -> false
-    | VarExp v -> if (v = f) then true else false
+    | VarExp v -> false
     | MonOpAppExp (mon_op, e1) -> check_rec_f f e1
-    | BinOpAppExp (bin_op, e1, e2) -> (check_rec_f f e1)||(check_rec_f f e2)
+    | BinOpAppExp (bin_op, e1, e2) -> (check_rec_f f e1) || (check_rec_f f e2)
     | IfExp (e1, e2, e3) ->
-        (check_rec_f f e1)||(check_rec_f f e2)||(check_rec_f f e3)
+        (check_rec_f f e1) || (check_rec_f f e2) || (check_rec_f f e3)
     | LetInExp (s, e1, e2) ->
-        if (s=f) then true else (check_rec_f f e1)||(check_rec_f f e2)
-    | FunExp (s, e1) -> if (s=f) then true else (check_rec_f f e1)
+        if (check_rec_f f e1) 
+            then true
+            else
+                (
+                if (s=f) then false else ( (check_rec_f f e1) || (check_rec_f f e2) )
+                )
+    | FunExp (s, e1) -> if (s=f) then false else (check_rec_f f e1)
     | AppExp (e1, e2) -> 
-        if (e1=f) then true else (check_rec_f f e1)||(check_rec_f f e2)
+        (
+        match e1
+        with VarExp v -> if (e1=f) then true else false
+        | _ -> (check_rec_f f e1) || (check_rec_f f e2)
+        )
     | LetRecInExp (g, x, e1, e2) -> 
         if (g=f)||(x=f) then true else (check_rec_f f e1)||(check_rec_f f e2)
     | RaiseExp e1 -> (check_rec_f f e1)
@@ -249,25 +258,6 @@ and check_rec_f_help f nopt_e_lst =
     with (nnopt, en)::rest ->
         (check_rec_f f en)||(check_rec_f_help f rest)
 
-let check_tail_rec_f f e =
-    match e
-    with AppExp(e1, e2) ->
-        (
-        let check_e2 = check_tail_rec_f f e2
-        in
-            (
-            match e1
-            with VarExp g -> if (g = f) then check_e2
-            | _ > 
-            )
-        )
-
-let check_tail_recursion (dec, m) =
-    match dec
-    with (Anon e) -> false
-    | Let (s, e) -> false
-    | LetRec (f, x, e) ->
-        check_tail_rec_f f e ;;
 
 (*    
  *  | _ -> raise (Failure "Not implemented yet.")
