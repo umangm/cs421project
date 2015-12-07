@@ -226,17 +226,30 @@ and getFirstMatch lst m j =
 
 *)
 
-
 let check_tail_rec_f f e =
     match e
     with AppExp(e1, e2) ->
         (
-        let check_e2 = check_tail_rec_f f e2
-        in
+        match check_rec_f f e2
+        with true -> false
+        | false ->
             (
             match e1
-            with VarExp g -> if (g = f) then check_e2
-            | _ > 
+            with VarExp g -> if (g = f) then true
+            | _ -> check_tail_rec_f f e1
+            )
+        )
+    | IfExp (e1, e2, e3) ->
+        (
+        match check_rec_f f e1
+        with true -> false
+        | false ->
+            (
+            let (e2_tail, e3_tail) = (check_tail_rec_f f e2, check_tail_rec_f f e3)
+            in
+            match e2_tail
+            with true -> if e3_tail then true else check_rec_f f e3
+            | false -> if (not e3_tail) then false else check_rec_f f e2
             )
         )
 
