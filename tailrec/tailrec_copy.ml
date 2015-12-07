@@ -226,6 +226,33 @@ and getFirstMatch lst m j =
 
 *)
 
+let rec check_let_in_meaningful x e =
+    match e2 
+    with ConstExp c -> false
+    | VarExp v -> if (v = x) then true else false
+    | MonOpAppExp (mon_op, e1) -> check_let_in_meaningful x e1
+    | BinOpAppExp (bin_op, e1, e2) -> (check_let_in_meaningful x e1) || (check_let_in_meaningful x e2) 
+    | IfExp (e1, e2, e3) ->
+        (check_let_in_meaningful x e1) || (check_let_in_meaningful x e2)  || (check_let_in_meaningful x e3) 
+    | LetInExp (s, e1, e2) -> (*TODO*)
+        if (check_let_in_meaningful x e1)
+            then (check_let_in_meaningful s e2)
+        else 
+            (check_let_in_meaningful x e2)
+    | FunExp (s, e1) -> if (s=x) then false else (check_let_in_meaningful x e1)
+    | AppExp (e1, e2) -> 
+        (check_let_in_meaningful x e1) || (check_let_in_meaningful x e2)
+    | LetRecInExp (g, y, e1, e2) ->
+        if (g=x)||(y=x) then false else (check_let_in_meaningful x e1) || (check_let_in_meaningful x e2)
+    | RaiseExp e1 -> (check_let_in_meaningful x e1)
+    | TryWithExp (e0, n1opt, e1, nopt_e_lst) -> (*TODO*)
+        (check_let_in_meaningful x e0)||(check_let_in_meaningful x e1)||(check_let_in_meaningful_help x nopt_e_lst)
+and check_let_in_meaningful_help x nopt_e_lst = 
+    match nopt_e_lst 
+    with [] -> false
+    | (nnopt, en)::rest ->
+        (check_let_in_meaningful x en)||(check_let_in_meaningful_help x rest)
+
 let rec check_rec_f f e =
     match e 
     with ConstExp c -> false
