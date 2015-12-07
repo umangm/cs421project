@@ -28,25 +28,12 @@ let _ =
              | None          -> (print_string "\ndoes not type check\n";
                                  loop gamma mem)
 
-           | Some (Proof(hyps,judgement)) -> (
-             match eval_dec (dec, mem) with 
-               ((None, value), m) ->
-                  (print_string "\nresult:\n";
-                  print_string "Hey... TESTING\n";
-                   print_string "_ = ";
-                   print_value value;
-                   print_string "\n";
-                   loop gamma mem)
-             | ((Some s,value), m) ->
-                  (print_string "\nresult:\n";
-                  print_string "Hey... TESTING\n";
-                   print_string (s^" = ");
-                   print_value value;
-                   print_string "\n";
-                   (match judgement with DecJudgment (_,_,delta) ->
-                   loop (sum_env delta gamma) (*(ins_env gamma s (gen gamma ty))*) m
-                   | _ -> raise (Failure "This shouldn't be possible")))
-             )   
+           | Some (Proof(hyps,judgement)) ->
+           (
+             match check_tail_recursion dec 
+             with true -> print_string "Tail Recursive!\n"; loop gamma mem
+             | false -> print_string "Not Tail Recursive!\n"; loop gamma mem
+            )   
         with Failure s -> (print_newline();
 			   print_endline s;
                            print_newline();
