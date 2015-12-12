@@ -71,58 +71,33 @@ and check_rec_f_lst f nopt_e_lst =
 
 let rec check_tail_rec_f f e =
     match e
-    with AppExp(e1, e2) ->
-        (
-        match (check_rec_f f e2)
-        with true -> false
-        | false ->
-            (
-            match e1
-            with VarExp g -> if (g = f) then true else false
-            | _ -> (check_tail_rec_f f e1)
-            )
-        )
-    | IfExp (e1, e2, e3) ->
-        (
-        match (check_rec_f f e1)
-        with true -> false
-        | false ->
-            (
-            let (e2_tail, e3_tail) = (check_tail_rec_f f e2, check_tail_rec_f f e3)
-            in
-            match e2_tail
-            with true -> if e3_tail then true else (not (check_rec_f f e3))
-            | false -> if e3_tail then (not (check_rec_f f e2)) else false
-            )
-        )
-    | FunExp (x, e1) -> 
-        if (x = f) then false else (check_tail_rec_f f e1)
+    with ConstExp c -> true
+    | VarExp v -> true
+    | AppExp(e1, e2) -> if (check_rec_f f e2)
+        then false
+        else check_tail_rec_f f e1
+    | IfExp (e1, e2, e3) -> 
+            (not (check_rec_f f e1)) &&
+            (check_tail_rec_f f e2) && 
+            (check_tail_rec_f f e3)
+    | FunExp (x, e1) -> true
     | LetInExp (x, e1, e2) ->
         if (x = f) 
-            then false 
+            then (not (check_rec_f f e1))
             else ( (not (check_rec_f f e1)) && (check_tail_rec_f f e2))
     | LetRecInExp (g, x, e1, e2) ->
-        if ((x = f) || (g = f))
-            then false
-            else ( (not (check_rec_f f e1)) && (check_tail_rec_f f e2))
+        if (g = f) then true
+        else if (not (g=f) && (x=f)) then (check_tail_rec_f f e2)
+        else ( (not (check_rec_f f e1)) && (check_tail_rec_f f e2))
     | TryWithExp (e', n1opt, e1, nopt_e_lst) ->
         (
         if (check_rec_f f e')
             then false
             else let lst = ((n1opt, e1)::nopt_e_lst)
                 in
-                (check_list_for_either lst f) && (check_list_for_atleast lst f)
+                (List.fold_right (fun (intop, h) -> fun t -> (check_tail_rec_f f h) && t) lst true) 
         )
-    | _ -> false
-and check_list_for_either lst f = 
-    match lst
-    with [] -> true
-    | ((nopt, e)::nopt_e_lst) -> ((check_tail_rec_f f e) || (not (check_rec_f f e)) ) && (check_list_for_either nopt_e_lst f)
-
-and check_list_for_atleast lst f = 
-    match lst
-    with [] -> false
-    | ((nopt, e)::nopt_e_lst) -> if (check_tail_rec_f f e) then true else (check_list_for_atleast nopt_e_lst f)
+    | _ -> false ;;
 
 
 let check_tail_recursion dec =

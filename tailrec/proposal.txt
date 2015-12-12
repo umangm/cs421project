@@ -20,15 +20,17 @@ if it is "recursive in f" and one of the following holds:
 
 3. e = AppExp(e1, e2). and
     a. e2 is not "recursive in f"
-    b. e1 = f
-       or
-       e1 is "tail-recursive in f"
+#    b. e1 = f
+#       or
+#       e1 is "tail-recursive in f"
+    b. e1 is "tail-recursive in f"
 
 3 e = IfExp (e1, e2, e3), and
     a. e1 is not "recursive in f"
-    b. If e2 is either "tail-recursive in f" or not "recursive in f", and e3 is "tail-recursive in f"
-       or
-       If e3 is either "tail-recursive in f" or not "recursive in f", and e2 is "tail-recursive in f"
+#    b. If e2 is either "tail-recursive in f" or not "recursive in f", and e3 is "tail-recursive in f"
+#       or
+#       If e3 is either "tail-recursive in f" or not "recursive in f", and e2 is "tail-recursive in f"
+    b. Both e2 and e3 are "tail reecursive in f"
 
 4. e = FunExp (x, e1)
 
@@ -42,15 +44,17 @@ if it is "recursive in f" and one of the following holds:
 6. e = LetRecIn (g, x, e1, e2), and
     a. if g = f (and x is not f) then true
     b. if x = f (and g is not f) and e2 is tail recursive in f
-    c. If x=f and g=f, then NO IDEA
+#    c. If x=f and g=f, then NO IDEA
+    c. If x=f and g=f, then true
     d. if x!=f and g!=f, then
         d.1 e1 is not "recursive in f"
         d.2 e2 is "tail-recursive in f"
 
 7. e = TryWithExp(e', (i1, e1), (i2, e2), ..... (ik, ek)), and
     a. e' is not "recursive in f"
-    b. If each of e1, ..., ek is either "tail-recursive in f", or is  not "recursive in f"
-    c. At least one of e1, ... ek, is "tail-recursive" in f.
+#    b. If each of e1, ..., ek is either "tail-recursive in f", or is  not "recursive in f"
+    b. Each of e1, ..., ek is "tail-recursive in f"
+#    c. At least one of e1, ... ek, is "tail-recursive" in f.
    
 
 * A program defined as (1) is "tail-recursive" if RHS_expresison is "tail-recursive in f"

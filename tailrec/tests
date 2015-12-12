@@ -1,6 +1,6 @@
 open Mp6common
 let rubric_version = "1.0"
-let rubric_title = "CS421 Fall 2015 MP6"
+let rubric_title = "CS421 Fall 2015 Unit Project"
 
 (**************************************************************************
  * You can add new test cases by adding new elements to the following lists
