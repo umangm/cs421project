@@ -1,0 +1,120 @@
+Title: Checking Tail Recursion in PicoML
+
+Team:
+1. Umang Mathur     umathur3@illinois.edu
+2. Chia-hao Hsieh   chsieh17@illinois.edu
+
+We intend to check if a program defined in PicoML, having the form
+    let rec f = RHS_expression      -- (1)
+is tail recursive or not.
+
+* Given an expression e and identifier f, e is said to be "recursive in f",
+if it has a sub-expression of the form AppExp (f, e1), where e1 is a well formed expression.
+
+* Given an expression e and identifier f, e is said to be "tail-recursive in f",
+if it is "recursive in f" and one of the following holds:
+
+1. e = ConstExp c
+
+2. e = VarExp v
+
+3. e = AppExp(e1, e2). and
+    a. e2 is not "recursive in f"
+    b. e1 = f
+       or
+       e1 is "tail-recursive in f"
+
+3 e = IfExp (e1, e2, e3), and
+    a. e1 is not "recursive in f"
+    b. If e2 is either "tail-recursive in f" or not "recursive in f", and e3 is "tail-recursive in f"
+       or
+       If e3 is either "tail-recursive in f" or not "recursive in f", and e2 is "tail-recursive in f"
+
+4. e = FunExp (x, e1)
+
+5. e = LetIn (x, e1, e2), and
+    a. If x = f then  [That is, the expression is of the form "let f = e1 in e2", in which case the "f" has been "overwritten"]
+        a.1 e1 is not "recursive in f"
+    b. If x is not f then 
+        b.1 e1 is not "recursive in f"
+        b.2 e2 is "tail-recursive in f"
+
+6. e = LetRecIn (g, x, e1, e2), and
+    a. if g = f (and x is not f) then true
+    b. if x = f (and g is not f) and e2 is tail recursive in f
+    c. If x=f and g=f, then NO IDEA
+    d. if x!=f and g!=f, then
+        d.1 e1 is not "recursive in f"
+        d.2 e2 is "tail-recursive in f"
+
+7. e = TryWithExp(e', (i1, e1), (i2, e2), ..... (ik, ek)), and
+    a. e' is not "recursive in f"
+    b. If each of e1, ..., ek is either "tail-recursive in f", or is  not "recursive in f"
+    c. At least one of e1, ... ek, is "tail-recursive" in f.
+   
+
+* A program defined as (1) is "tail-recursive" if RHS_expresison is "tail-recursive in f"
+
+Hence, for checking if any program of the form (1) is "tail-recursive" or not,
+we will evaluate the parse tree (Abstract Syntax Tree) of the RHS_expression
+and check if it is "recursive in f" and also "tail-recursive in f"
+
+Breakup:
+
+Umang Mathur:
+    1. Implementation of cases 1., 2., 3.
+    2. Testing for cases 4., 5., 6.
+   
+Chia-Hao Hsieh:
+    1. Implementation of cases 4., 5., 6.
+    2. Testing for cases 1., 2., 3.
+   
+Timeline:
+    1. December 9, 2015 : Implementation
+    2. December 11, 2015: Testing
+    2. December 16, 2015: Report, and, Presentation
+
+General Comments:
+We believe the definition of a tail-recursive expresison may not be exhaustive,
+and we might be missing some obvious cases.
+In particular, we would like to ask if the following functions are tail recursive:
+
+1. let rec f n =    if n = 0
+                    then 1
+                    else
+                        if (f 0) = 1
+                        then f (n-1)
+                        else 2;;
+
+  Is f tail-recursive ?
+  The issue here is that the else expression of the outer "if"
+  makes a mandatory call to f (in checking "(f 0) = 1").
+  According to our definition above, the above function is not tail-recursive
+
+2. let rec f n =    if n = 0
+                    then 1
+                    else f (n*(f(n-1)));;
+  Is f tail-recursive ?
+  The issue here is that the last operation is a call to f, so should it be called a tail call ?
+  According to our definition above, the above function is not tail-recursive
+
+3.
+ let rec g n = if n = 0 then 1 else n * (g (n-1))
+ let rec f n = g n;;
+  Is f tail-recursive ?
+  According to our definition above, the above function is indeed tail-recursive
+
+
+4. let rec f x aux =
+    let g = f
+    in
+    if x = 0 then aux else g (x-1) (x*aux);;
+    
+    let rec f x aux = let g = f in if x = 0 then aux else g (x-1) (x*aux);;  
+
+Is the above declaration tail recursive ?
+It does not even fit in our definition of "recursive in f".
+
+5. let x = f in 3;;
+
+Is the above expression recursive in f ?
