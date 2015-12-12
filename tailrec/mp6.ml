@@ -127,8 +127,8 @@ and check_list_for_atleast lst f =
 
 let check_tail_recursion dec =
     match dec
-    with (Anon e) -> false
-    | Let (s, e) -> false
+    with (Anon e) -> true
+    | Let (s, e) -> true
     | LetRec (f, x, e) ->
         check_tail_rec_f f e ;;
 
