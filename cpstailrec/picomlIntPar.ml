@@ -5,6 +5,7 @@
 open Mp7common
 open Picomlparse
 open Student
+#use "mp7.ml"
 
 let is_interactive = 0 = (Sys.command "[ -t 0 ]")
 
@@ -15,7 +16,6 @@ let rec eval_exp_cps env ecps =
       (print_string ("Exception no. "^string_of_int n^" raised.\n"); None)
     | Final v -> Some v
     | Intermediate(env', ecps') -> eval_exp_cps env' ecps'
-
 
 let rec eval_dec (dec, env) = 
   match dec
@@ -52,24 +52,15 @@ let _ =
              | None          -> (print_string "\ndoes not type check\n";
                                  loop gamma mem)
 
-           | Some (Proof(hyps,judgement)) -> (
-             match eval_dec (dec, mem) with 
-	       None -> loop gamma mem
-             | Some (None, value)->
-                  (print_string "\nresult:\n";
-                   print_string "_ = ";
-                   print_value value;
-                   print_string "\n";
-                   loop gamma mem)
-             | Some (Some s,value) ->
-                  (print_string "\nresult:\n";
-                   print_string (s^" = ");
-                   print_value value;
-                   print_string "\n";
-                   (match judgement with DecJudgment (_,_,delta) ->
-                   loop (sum_env delta gamma) (ValueBinding(s, value)::mem)
-                   | _ -> raise (Failure "This shouldn't be possible")))
-             )   
+           
+
+              | Some (Proof(hyps,judgement)) ->
+                         (
+                           match check_tail_recursion dec 
+                           with true -> print_string "Tail Recursive!\n"; loop gamma mem
+                           | false -> print_string "Not Tail Recursive!\n"; loop gamma mem
+                          )  
+
         with Failure s -> (print_newline();
 			   print_endline s;
                            print_newline();

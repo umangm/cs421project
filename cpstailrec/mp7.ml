@@ -2,6 +2,15 @@
 
 open Mp7common;;
 
+let check_tail_recursion dec =
+  match dec
+  with Anon e -> true
+  | Let (x,e) -> true
+  | LetRec (f,x,e) ->
+     let (i,j) = (next_index(),next_index()) in
+     let ecps2 = cps_exp e (ContVarCPS i) (ExnContVarCPS j) in
+     check_cps_tail_rec_f f x (ContVarCPS i) ecps2
+
 let rec check_cps_tail_rec_f f x k e = 
     match e
     with ConstCPS (k', c) -> cont_tail_recursive k' f
