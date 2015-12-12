@@ -14,33 +14,47 @@ if it has a sub-expression of the form AppExp (f, e1), where e1 is a well formed
 * Given an expression e and identifier f, e is said to be "tail-recursive in f",
 if it is "recursive in f" and one of the following holds:
 
-1. e = AppExp(e1, e2). and
+1. e = ConstExp c
+
+2. e = VarExp v
+
+3. e = AppExp(e1, e2). and
     a. e2 is not "recursive in f"
-    b. e1 = f
-       or
-       e1 is "tail-recursive in f"
+#    b. e1 = f
+#       or
+#       e1 is "tail-recursive in f"
+    b. e1 is "tail-recursive in f"
 
-2. e = IfExp (e1, e2, e3), and
+3 e = IfExp (e1, e2, e3), and
     a. e1 is not "recursive in f"
-    b. If e2 is either "tail-recursive in f" or not "recursive in f", and e3 is "tail-recursive in f"
-       or
-       If e3 is either "tail-recursive in f" or not "recursive in f", and e2 is "tail-recursive in f"
+#    b. If e2 is either "tail-recursive in f" or not "recursive in f", and e3 is "tail-recursive in f"
+#       or
+#       If e3 is either "tail-recursive in f" or not "recursive in f", and e2 is "tail-recursive in f"
+    b. Both e2 and e3 are "tail reecursive in f"
 
-3. e = FunExp (x, e1), and
-    a. e1 is "tail-recursive is f"
+4. e = FunExp (x, e1)
 
-4. e = LetIn (x, e1, e2), and
-    a. e1 is not "recursive is f"
-    b. e2 is "tail-recursive in f"
+5. e = LetIn (x, e1, e2), and
+    a. If x = f then  [That is, the expression is of the form "let f = e1 in e2", in which case the "f" has been "overwritten"]
+        a.1 e1 is not "recursive in f"
+    b. If x is not f then 
+        b.1 e1 is not "recursive in f"
+        b.2 e2 is "tail-recursive in f"
 
-5. e = LetRecIn (g, x, e1, e2), and
-    a. e1 is not "recursive is f"
-    b. e2 is "tail-recursive in f"
+6. e = LetRecIn (g, x, e1, e2), and
+    a. if g = f (and x is not f) then true
+    b. if x = f (and g is not f) and e2 is tail recursive in f
+#    c. If x=f and g=f, then NO IDEA
+    c. If x=f and g=f, then true
+    d. if x!=f and g!=f, then
+        d.1 e1 is not "recursive in f"
+        d.2 e2 is "tail-recursive in f"
 
-6. e = TryWithExp(e', (i1, e1), (i2, e2), ..... (ik, ek)), and
+7. e = TryWithExp(e', (i1, e1), (i2, e2), ..... (ik, ek)), and
     a. e' is not "recursive in f"
-    b. If each of e1, ..., ek is either "tail-recursive in f", or is  not "recursive in f"
-    c. At least one of e1, ... ek, is "tail-recursive" in f.
+#    b. If each of e1, ..., ek is either "tail-recursive in f", or is  not "recursive in f"
+    b. Each of e1, ..., ek is "tail-recursive in f"
+#    c. At least one of e1, ... ek, is "tail-recursive" in f.
    
 
 * A program defined as (1) is "tail-recursive" if RHS_expresison is "tail-recursive in f"
@@ -88,8 +102,9 @@ In particular, we would like to ask if the following functions are tail recursiv
   The issue here is that the last operation is a call to f, so should it be called a tail call ?
   According to our definition above, the above function is not tail-recursive
 
-3. let rec g n = if n = 0 then 1 else n * (g (n-1))
-  let rec f n = g n;;
+3.
+ let rec g n = if n = 0 then 1 else n * (g (n-1))
+ let rec f n = g n;;
   Is f tail-recursive ?
   According to our definition above, the above function is indeed tail-recursive
 
@@ -97,7 +112,13 @@ In particular, we would like to ask if the following functions are tail recursiv
 4. let rec f x aux =
     let g = f
     in
-    if x = 0 then aux else g (x-1) (x*aux);; 
+    if x = 0 then aux else g (x-1) (x*aux);;
+    
+    let rec f x aux = let g = f in if x = 0 then aux else g (x-1) (x*aux);;  
 
 Is the above declaration tail recursive ?
 It does not even fit in our definition of "recursive in f".
+
+5. let x = f in 3;;
+
+Is the above expression recursive in f ?
