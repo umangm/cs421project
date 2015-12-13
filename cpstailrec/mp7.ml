@@ -2,41 +2,8 @@
 
 open Mp7common;;
 
-let check_tail_recursion dec =
-  match dec
-  with Anon e -> true
-  | Let (x,e) -> true
-  | LetRec (f,x,e) ->
-     let (i,j) = (next_index(),next_index()) in
-     let ecps2 = cps_exp e (ContVarCPS i) (ExnContVarCPS j) in
-     check_cps_tail_rec_f f x (ContVarCPS i) ecps2
 
-let rec check_cps_tail_rec_f f x k e = 
-    match e
-    with ConstCPS (k', c) -> cont_tail_recursive k' f
-    | VarCPS (k', v) -> cont_tail_recursive k' f
-    | MonOpAppCPS (k', mono_op, o1, exk) -> cont_tail_recursive k' f
-    | BinOpAppCPS (k', bin_op, o1, o2, exk) -> cont_tail_recursive k' f
-    | IfCPS (b, e1, e2) -> (check_cps_tail_rec_f f x k e1) && (check_cps_tail_rec_f f x k e2)
-    | AppCPS (k', e1, e2, exk) -> 
-        if (e1 = f)
-            then (if (k'=k) then true else false)
-        else
-            cont_tail_recursive k' f
 
-    | FunCPS (kappa, x, k, ek, e) -> true
-    | FixCPS (kappa, f, x, k, ek, e) -> true
-    
-and cont_tail_recursive k f = 
-    match k
-    with ContVarCPS i -> true
-    | External -> true
-    | FnContCPS (x, e) -> 
-        if (x=f)
-            then true
-        else
-            (check_cps_tail_rec_f f x k e) (*TODO x ?*)
-    | ExnMatch ek -> true
 
 let rec get_first_match_updateexn lst i =
     match lst
