@@ -91,8 +91,8 @@ Some(Some f, (CPSRecClosureVal(f, x, i, j, ecps2, env)))
      | Some (Proof(hyps,judgement)) ->
      (
       match check_tail_recursion dec 
-      with true -> print_string "Tail Recursive!\n"; loop gamma mem
-      | false -> print_string "Not Tail Recursive!\n"; loop gamma mem
+      with true -> print_string "Tail Recursive!\n"; (*string_of_exp_cps dec;*)loop gamma mem
+      | false -> print_string "Not Tail Recursive!\n"; (*string_of_exp_cps dec;*) loop gamma mem
      )  
 
      with Failure s -> (print_newline();
