@@ -822,6 +822,32 @@ and exp_cps =
  | FunCPS of cps_cont * string * int * int * exp_cps
  | FixCPS of cps_cont * string * string * int * int * exp_cps 
 
+let rec string_of_exp_cps ext_cps =
+    match ext_cps 
+    with VarCPS (k,x) -> paren_string_of_cps_cont k ^ " " ^ x
+    | ConstCPS (k,c) -> paren_string_of_cps_cont k ^ " " ^ string_of_const c
+    | MonOpAppCPS (k,m,r,exceptn) ->
+       paren_string_of_cps_cont k ^ "(" ^  string_of_mon_op m ^ " " ^ r ^ ")"
+    | BinOpAppCPS (k,b,r,s, exceptn) ->
+       paren_string_of_cps_cont k ^ "(" ^ r ^ " " ^ string_of_bin_op b ^ " " ^ s ^")"
+    | IfCPS (b,e1,e2) -> "IF "^b^" THEN "^ string_of_exp_cps e1 ^" ELSE "^string_of_exp_cps e2
+    | AppCPS (k,r,s,excptn) -> "("^r ^ " " ^ s ^ " " ^ paren_string_of_cps_cont k ^ ")" 
+    | FunCPS (k, x, i, j,e) ->  (paren_string_of_cps_cont k) ^ " (" ^ (string_of_funk x e) ^ ")"
+    | FixCPS (k,f,x,i, j, e) -> paren_string_of_cps_cont k ^
+
+and string_of_funk x e =
+     "FUN " ^ x ^ " " ^ (string_of_cont_var Kvar) ^ " -> " ^ string_of_exp_cps e
+and
+   string_of_cps_cont k =
+    match k with External -> "<external>"
+    | ContVarCPS Kvar -> string_of_cont_var Kvar
+    | FnContCPS (x, e) -> "FN " ^ x ^ " -> " ^ string_of_exp_cps e
+and
+  paren_string_of_cps_cont k =
+   match k with FnContCPS _ -> "(" ^ string_of_cps_cont k ^ ")"
+   | _ -> string_of_cps_cont k
+
+                            "(FIX "^ f ^". " ^ (string_of_funk x e) ^ ")"
 
 let (freshIntName , resetIntNameInt) =
     let intNameInt = ref 0 in
