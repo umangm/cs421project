@@ -73,6 +73,8 @@ let rec check_tail_rec_f f e =
     match e
     with ConstExp c -> true
     | VarExp v -> true
+    | MonOpAppExp (mon_op, e1) -> not (check_rec_f f e1)
+    | BinOpAppExp (bin_op, e1, e2) -> (not (check_rec_f f e1)) && (not (check_rec_f f e2))
     | AppExp(e1, e2) -> if (check_rec_f f e2)
         then false
         else check_tail_rec_f f e1
