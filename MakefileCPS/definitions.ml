@@ -914,29 +914,40 @@ and
 
 
 let rec string_of_exp_cps ext_cps = 
-match ext_cps with VarCPS (k,x) -> paren_string_of_cps_cont k ^ " " ^ x 
-| ConstCPS (k,c) -> paren_string_of_cps_cont k ^ " " ^ string_of_const c 
-| MonOpAppCPS (k,m,r, exncont) -> 
-paren_string_of_cps_cont k ^ "(" ^  string_of_mon_op m ^ " " ^ r ^ ")" 
-| BinOpAppCPS (k,b,r,s, exncont) -> 
-paren_string_of_cps_cont k ^ "(" ^ r ^ " " ^ string_of_bin_op b ^ " " ^ s ^")" 
-| IfCPS (b,e1,e2) -> "IF "^b^" THEN "^ string_of_exp_cps e1 ^" ELSE "^string_of_exp_cps e2 
-| AppCPS (k,r,s, exncont) -> "("^r ^ " " ^ s ^ " " ^ paren_string_of_cps_cont k ^ ")"  
-| FunCPS (k, x, i, j, e) ->  (paren_string_of_cps_cont k) ^ " (" ^ (string_of_funk x e i j) ^ ")" 
-| FixCPS (k,f,x,i,j, e) -> paren_string_of_cps_cont k ^ 
-"(FIX "^ f ^". " ^ (string_of_funk x e i j) ^ ")" 
+    match ext_cps 
+    with VarCPS (k,x) -> 
+        paren_string_of_cps_cont k ^ " " ^ x 
+    | ConstCPS (k,c) -> 
+        paren_string_of_cps_cont k ^ " " ^ string_of_const c 
+    | MonOpAppCPS (k,m,r, exncont) -> 
+        paren_string_of_cps_cont k ^ "(" ^  string_of_mon_op m ^ " " ^ r ^ ")" 
+    | BinOpAppCPS (k,b,r,s, exncont) -> 
+        paren_string_of_cps_cont k ^ "(" ^ r ^ " " ^ string_of_bin_op b ^ " " ^ s ^")" 
+    | IfCPS (b,e1,e2) -> 
+        "IF "^b^" THEN "^ string_of_exp_cps e1 ^" ELSE "^string_of_exp_cps e2 
+    | AppCPS (k,r,s, exncont) -> 
+        "("^r ^ " " ^ s ^ " " ^ paren_string_of_cps_cont k ^ ")"  
+    | FunCPS (k, x, i, j, e) ->  
+        (paren_string_of_cps_cont k) ^ " (" ^ (string_of_funk x e i j) ^ ")" 
+    | FixCPS (k,f,x,i,j, e) -> 
+        paren_string_of_cps_cont k ^ "(FIX "^ f ^". " ^ (string_of_funk x e i j) ^ ")" 
+
 and string_of_funk x e i j = 
-"FUN " ^ x  ^ " -> " ^ "fn " ^ (string_of_int i) ^ ", " ^ (string_of_int j) ^ " => " ^ string_of_exp_cps e 
+    "FUN " ^ x  ^ " -> " ^ "fn " ^ (string_of_int i) ^ ", " ^ (string_of_int j) ^ " => " ^ string_of_exp_cps e 
+
 and 
 string_of_cps_cont k = 
-match k with External -> "<external>" 
-| ContVarCPS i -> "_k" ^ (string_of_int i) 
-| FnContCPS (x, e) -> "FN " ^ x ^ " -> " ^ string_of_exp_cps e 
-| ExnMatch exncont -> "<some exception>" 
+    match k 
+    with External -> "<external>" 
+    | ContVarCPS i -> "_k" ^ (string_of_int i) 
+    | FnContCPS (x, e) -> "FN " ^ x ^ " -> " ^ string_of_exp_cps e 
+    | ExnMatch exncont -> "<some exception>" 
+
 and 
+
 paren_string_of_cps_cont k = 
-match k with FnContCPS _ -> "(" ^ string_of_cps_cont k ^ ")" 
-| _ -> string_of_cps_cont k ;;
+    match k with FnContCPS _ -> "(" ^ string_of_cps_cont k ^ ")" 
+    | _ -> string_of_cps_cont k ;;
 
 
 
