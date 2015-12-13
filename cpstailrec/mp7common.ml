@@ -1,5 +1,63 @@
 (* File: mp7common.ml *)
 
+
+type token =
+  | INT of (int)
+  | FLOAT of (float)
+  | BOOL of (bool)
+  | STRING of (string)
+  | IDENT of (string)
+  | NEG
+  | PLUS
+  | MINUS
+  | TIMES
+  | DIV
+  | DPLUS
+  | DMINUS
+  | DTIMES
+  | DDIV
+  | CARAT
+  | LT
+  | GT
+  | LEQ
+  | GEQ
+  | EQUALS
+  | NEQ
+  | PIPE
+  | ARROW
+  | SEMI
+  | DSEMI
+  | DCOLON
+  | AT
+  | NIL
+  | LET
+  | REC
+  | AND
+  | END
+  | IN
+  | IF
+  | THEN
+  | ELSE
+  | FUN
+  | MOD
+  | RAISE
+  | TRY
+  | WITH
+  | NOT
+  | LOGICALAND
+  | LOGICALOR
+  | LBRAC
+  | RBRAC
+  | LPAREN
+  | RPAREN
+  | COMMA
+  | UNDERSCORE
+  | UNIT
+  | EOF
+  | TRUE
+  | FALSE
+
+
 (* expressions for PicoML *)
 type const = BoolConst of bool | IntConst of int | FloatConst of float
            | StringConst of string | NilConst | UnitConst 
@@ -822,32 +880,32 @@ and exp_cps =
  | FunCPS of cps_cont * string * int * int * exp_cps
  | FixCPS of cps_cont * string * string * int * int * exp_cps 
 
+
+
 let rec string_of_exp_cps ext_cps =
-    match ext_cps 
-    with VarCPS (k,x) -> paren_string_of_cps_cont k ^ " " ^ x
+    match ext_cps with VarCPS (k,x) -> paren_string_of_cps_cont k ^ " " ^ x
     | ConstCPS (k,c) -> paren_string_of_cps_cont k ^ " " ^ string_of_const c
-    | MonOpAppCPS (k,m,r,exceptn) ->
+    | MonOpAppCPS (k,m,r, exncont) ->
        paren_string_of_cps_cont k ^ "(" ^  string_of_mon_op m ^ " " ^ r ^ ")"
-    | BinOpAppCPS (k,b,r,s, exceptn) ->
+    | BinOpAppCPS (k,b,r,s, exncont) ->
        paren_string_of_cps_cont k ^ "(" ^ r ^ " " ^ string_of_bin_op b ^ " " ^ s ^")"
     | IfCPS (b,e1,e2) -> "IF "^b^" THEN "^ string_of_exp_cps e1 ^" ELSE "^string_of_exp_cps e2
-    | AppCPS (k,r,s,excptn) -> "("^r ^ " " ^ s ^ " " ^ paren_string_of_cps_cont k ^ ")" 
-    | FunCPS (k, x, i, j,e) ->  (paren_string_of_cps_cont k) ^ " (" ^ (string_of_funk x e) ^ ")"
-    | FixCPS (k,f,x,i, j, e) -> paren_string_of_cps_cont k ^
-
-and string_of_funk x e =
-     "FUN " ^ x ^ " " ^ (string_of_cont_var Kvar) ^ " -> " ^ string_of_exp_cps e
+    | AppCPS (k,r,s, exncont) -> "("^r ^ " " ^ s ^ " " ^ paren_string_of_cps_cont k ^ ")" 
+    | FunCPS (k, x, i, j, e) ->  (paren_string_of_cps_cont k) ^ " (" ^ (string_of_funk x e i j) ^ ")"
+    | FixCPS (k,f,x,i,j, e) -> paren_string_of_cps_cont k ^
+                            "(FIX "^ f ^". " ^ (string_of_funk x e i j) ^ ")"
+and string_of_funk x e i j =
+     "FUN " ^ x  ^ " -> " ^ "fn " ^ (string_of_int i) ^ ", " ^ (string_of_int j) ^ " => " ^ string_of_exp_cps e
 and
    string_of_cps_cont k =
     match k with External -> "<external>"
-    | ContVarCPS Kvar -> string_of_cont_var Kvar
+    | ContVarCPS i -> "_k" ^ (string_of_int i)
     | FnContCPS (x, e) -> "FN " ^ x ^ " -> " ^ string_of_exp_cps e
+    | ExnMatch exncont -> "<some exception>"
 and
   paren_string_of_cps_cont k =
    match k with FnContCPS _ -> "(" ^ string_of_cps_cont k ^ ")"
    | _ -> string_of_cps_cont k
-
-                            "(FIX "^ f ^". " ^ (string_of_funk x e) ^ ")"
 
 let (freshIntName , resetIntNameInt) =
     let intNameInt = ref 0 in
