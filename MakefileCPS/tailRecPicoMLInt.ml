@@ -27,10 +27,8 @@ let _ =
         (
         try
             let dec = main 
-                (*(fun lb -> match Picomllex.token lb *)
                 (fun lb -> match token lb 
                     with 
-                    (*| EOF -> raise Picomllex.EndInput*)
                     | EOF -> raise EndInput
                     | r -> r
                 ) lexbuf 
@@ -61,7 +59,6 @@ let _ =
             loop gamma mem
             )
         )
-    (*with Picomllex.EndInput -> *)
     with EndInput -> 
         exit 0
 
