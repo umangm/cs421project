@@ -1,5 +1,5 @@
 (*
- tailRecPicoMLInt.ml - DO NOT EDIT
+ tailRecPicoMLInt.ml
  *)
 
 open Definitions
