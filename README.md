@@ -1,6 +1,6 @@
 # cs421project
 Usage
-
+1.
 Go into 'cs421project/tailrec'
 
 Run command 'make'
