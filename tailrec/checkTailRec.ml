@@ -90,7 +90,12 @@ let rec check_tail_rec_f f e =
     | LetRecInExp (g, x, e1, e2) ->
         if (g = f) then true
         else if (not (g=f) && (x=f)) then (check_tail_rec_f f e2)
+        else ( (check_tail_rec_f f e2))
+    (* Before fix:
+        if (g = f) then true
+        else if (not (g=f) && (x=f)) then (check_tail_rec_f f e2)
         else ( (not (check_rec_f f e1)) && (check_tail_rec_f f e2))
+    *)
     | TryWithExp (e', n1opt, e1, nopt_e_lst) ->
         (
         if (check_rec_f f e')
