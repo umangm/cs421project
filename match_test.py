@@ -1,12 +1,10 @@
+#! /usr/bin/env python
 
 import os
 
-#os.system("echo 'let f = 5;;' | tailrec/picomlIntPar > 'result.txt'")
-
+os.system("make")
 os.system("./tailrec/tailRecPicoMLTest > './tailrec_result.txt' ")
-
 os.system("./tailrecCPS/tailRecPicoMLTest > './tailrecCPS_result.txt' ")
-
 
 f = open('tailrec_result.txt', 'r')
 lines = f.readlines()
@@ -37,4 +35,3 @@ else:
 
 	if is_all_matched:
 		print("All test cases match. ")
-
