@@ -12,7 +12,7 @@ let is_interactive = 0 = (Sys.command "[ -t 0 ]")
 
 let _ =
   (if is_interactive
-      then print_endline "\nWelcome to the Student parser \n"
+      then print_endline "\nWelcome to the PicoML Tail-resursion Checker \n"
       else ());
   let rec loop gamma mem = 
   try

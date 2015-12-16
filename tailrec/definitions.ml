@@ -137,11 +137,11 @@ let string_of_typeVar n =
           | ([s],l) -> ([s],l)
           | (x::xs,l) -> ((x - 1) :: xs, l)
    in
-   let s = (String.create len)
+   let s = (Bytes.create len)
    in
    let _ =
     List.fold_left
-    (fun n c -> (String.set s n c; n + 1))
+    (fun n c -> (Bytes.set s n c; n + 1))
     0
     (List.map (fun x -> Char.chr(x + 97)) num_list)  (* Char.code 'a' = 97 *)
    in "'"^s;;
