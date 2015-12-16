@@ -1,0 +1,83 @@
+\documentclass{article}
+
+\input{header}
+
+\title{Checking Tail Recursion in PicoML}
+\author{Umang Mathur \\ \href{mailto:umathur3@illinois.edu}{umathur3@illinois.edu}
+\and Chia-Hao Hsieh \\ \href{mailto:chsieh17@illinois.edu}{chsieh17@illinois.edu}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+\subsection{Recursion}
+\hspace{0.2in} Allowing  procedures to be recursive allows the programmer to write more readable and intuitive/natural programs. 
+Inductive definitions and inductive programs can be very naturally programmed as recursive functions.
+Besides, recursive functions, can be easier to debug, due to the same reason.
+Recursive programs, at times, tend to be more efficient than a naive program with loops and no recursive calls. 
+Recursion, thus is a very handy tool for programmers.
+
+\subsection{Checking Tail Reclusion : Motivation}
+
+\hspace{0.2in} The convenience offered due to recursion, comes at a cost. 
+Recursive programs are generally modelled by the use of stack frames. 
+This means that recursive programs tend to consume extra space (stack) for every recursive call they make.
+Besides, the additional overhead of copying the variables and values to the new frame, also accounts for a non trivial overhead, which at times, is not desirable from the standpoint of efficiency.
+
+However, the extra space consumed can be overcome when the recursive call is the last thing the function does. 
+In this case, the contents of the stack can be replaced by the new frame, and there is no need to push an additional frame.
+
+The idea behind tail call optimization is essentially the same. 
+Informally, a recursive function is tail recursive when the recursive call is the last thing executed by the function. 
+Thus, if the compiler can detect if a function is tail-recursive, it can convert the function to an equivalent while-loop, thus avoiding an additional call that consumes extra stack space by virtue of the new frame added.
+
+\subsection{Goal of the Project}
+In this project, we implement a tool that checks if an procedure is tail recursive or not.
+Specifically, we wish to analyze code written in PicoML. 
+PicoML is a restricted form of OCaml. 
+As part of the assignments in the course, we have built an interpreter for this language.
+We aim to integrate the tool with the interpreter. 
+That is, we would use the parsing and the type checking functionality written in older assignments.
+This would enable use to directly use the functionality for implementing our tool, and would save some  effort, as compared to the scenario where we had to re-invent the wheel.
+
+\section{Implementation}
+We built two tail recursive checking programs. One for normal functions is based on MP6 while the other for CPS functions is based on MP7. 
+
+\subsection{Tail Recursive Checking Based on MP6}
+
+
+Here is our proposal:
+
+\subsection{Tail Recursive Checking for CPS Based on MP7}
+
+Here is our proposal:
+
+\subsection{Code Structure}
+Describe the code structure.
+Justify that the code is modular
+
+\section{Tests}
+[TODO]We put our test cases into grader of MP6 and MP7. So to test our programs, just run './grader' after 'make', as in what we have to do in the assignments. 
+
+\newpage
+
+\section{Listing}
+
+\input{listing}
+
+\begin{thebibliography}{9}
+
+\bibitem{lamport94}
+  Leslie Lamport,
+  \emph{\LaTeX: a document preparation system},
+  Addison Wesley, Massachusetts,
+  2nd edition,
+  1994.
+
+\end{thebibliography}
+
+
+\end{document}
