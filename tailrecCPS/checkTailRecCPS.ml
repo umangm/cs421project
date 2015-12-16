@@ -5,12 +5,10 @@ checkTailRecCPS.ml - DO NOT EDIT
 open Definitions
 
 let rec convert_f_exp e name_of_f = 
+    (* Return all variable numbers that correspond to f. *)
     (
     match e
     with  ConstCPS (k, c) -> 
-        (*
-         print_string "\nConstCPS \n";
-        *)
         convert_f_cont k name_of_f
     | VarCPS (k, g) -> 
         (*
@@ -22,8 +20,9 @@ let rec convert_f_exp e name_of_f =
                 let rec_list = convert_f_exp e' name_of_f 
                 in 
                 if (g = name_of_f) 
-                        then (number_of_f :: rec_list) 
-                        else rec_list
+                    (* Found a matched f. Add the number to retured list. *)
+                    then (number_of_f :: rec_list) 
+                    else rec_list
             | _ -> []
             )
     | MonOpAppCPS (k, _, _, _) -> 
@@ -72,45 +71,33 @@ convert_f_cont k name_of_f =
 let rec check_cps_tail_rec_f flist original_k x k e = 
     match e
     with ConstCPS (k', c) -> 
+        (* It's impossilbe to call f here, so go deeper to find if there are any f's. *)
         cont_tail_recursive original_k k' flist
     | VarCPS (k', v) -> 
-        (*
-        print_string "\nVarCPS\n"; 
-        *)
+        (* Similarly, go deeper to find f. *)
         cont_tail_recursive original_k k' flist
     | MonOpAppCPS (k', mono_op, o1, exk) ->
-        (*
-        print_string "\nMonOpAppCPS\n"; 
-        *)
+        (* Similarly, go deeper to find f. *)
         cont_tail_recursive original_k k' flist
     | BinOpAppCPS (k', bin_op, o1, o2, exk) -> 
-        (*
-        print_string "BinOp\n"; 
-        *)
+        (* Similarly, go deeper to find f. *)
         cont_tail_recursive original_k k' flist
     | IfCPS (b, e1, e2) -> 
+        (* Similarly, go deeper to find f. *)
         (check_cps_tail_rec_f flist original_k x k e1) && (check_cps_tail_rec_f flist original_k x k e2)
     | AppCPS (k', e1, e2, exk) -> 
         (
-        (*
-        print_string ("AppCPS:\n"^e1^", "^e2^", f: "^f^"\n");
-        *)
+        (* if e1 matches one of variable numbers corresponding to f ... *)
         if ( List.exists (fun x -> x = e1) flist)
             then 
                 (
+                (* And if the returned k is the original ...*)
                 if (k'=original_k) 
-                    then 
-                        (*
-                        print_string "true\n";
-                        *)
-                        true
-                     else 
-                         (*
-                         print_string "false\n";
-                         *)
-                         false
+                    then true (* then this is a tail call. *)
+                    else false
                 )
             else
+                (* Else just go deeper to find if there are any f's. *)
                 cont_tail_recursive original_k k' flist
         )
     | FunCPS (kappa, x, k, ek, e) -> true
@@ -121,7 +108,7 @@ and cont_tail_recursive original_k k flist =
     with ContVarCPS i -> true
     | External -> true
     | FnContCPS (x, e) -> 
-        check_cps_tail_rec_f flist original_k x k e (*TODO x ?*)
+        check_cps_tail_rec_f flist original_k x k e
     | ExnMatch ek -> true ;;
 
 
@@ -134,9 +121,7 @@ let check_tail_recursion dec =
         in
             let ecps2 = cps_exp e (ContVarCPS i) (ExnContVarCPS j) 
             in
-            (*
-            print_string ((string_of_exp_cps ecps2)^"\n");
-            *)
+
             let flist = convert_f_exp ecps2 f
                 in
                 check_cps_tail_rec_f flist (ContVarCPS i) x (ContVarCPS i) ecps2 ;;
