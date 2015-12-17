@@ -1,0 +1,92 @@
+\begin{definition}[PicoML Expression]
+A PicoML-style expression $e$ is formally defined by the recursive grammar:
+\begin{equation*}
+\begin{split}
+e :=& \; c \; | \; v \; | \; \odot e \; | \; e \oplus e \; | \; \ifexp{e}{e}{e} \; | \; e \; e \; | \; \funexp{x}{e} \; \\
+  &| \; \letinexp{x}{e}{e} \; | \; \letrecinexp{f}{x}{e}{e}  \; | \; \raiseexp{e} \;\\
+  &| \; \mathtt{try} \; e \; \mathtt{with} \; \mathtt{e\_int\_list}
+i\end{split}
+\end{equation*}
+
+where, $c$ is a constant, $v$ is a variable, and $\mathtt{e\_int\_list}$ is inductively defined as:
+
+\begin{equation*}
+\begin{split}
+\mathtt{e\_int\_list} :=& \; \mathtt{i} \arr e  \; | \; \mathtt{i} \arr e , \mathtt{e\_int\_list}
+\end{split}
+\end{equation*}
+
+where $i$ is an integer
+\end{definition}
+
+\begin{definition}[PicoML Declaration]
+Declarations in PicoML are declarative statements that assign an expression to an identifier. Alternately, then can also be plain expressions.
+
+\begin{equation*}
+\begin{split}
+\mathtt{dec} :=& \; e  \; | \; \mathtt{let} \; x \; \mathtt{=} \; e \; | \; \mathtt{let} \; \mathtt{rec} \; f \; x \; \mathtt{=} \; e
+\end{split}
+\end{equation*}
+\end{definition}
+
+
+\begin{definition}[Recursive Expression]
+An expression $e$ defined in PicoML is defined to be recursive with respect to an dentifier $f$ if 
+there is a subexpression $e'$ of $e$ (that is not lambda lifted) and has the form $f \; e''$, where $e''$ is an expression, 
+and no expression that contains $e'$ redefines $f$
+\end{definition}
+
+Let us take a look at a couple of examples to understand the above definition.
+\begin{example}
+Consider the PicoML declaration below:
+\[
+\mathtt{let} \; \mathtt{rec} \; f \; x \; = \; \ifexp{x = 0}{1}{f \; (f \; x - 1)} ;;
+\]
+Note that, the body of the above decclaration is recursive in $f$, based on the above definition.
+ \end{example} 
+
+\begin{example}
+Consider the expression defined below:
+\[
+\mathtt{let} \; {g} \; = f \; \mathtt{in} \; g \; 3;; 
+\]
+Note that, based on the definition above, the above expression is not recursive in $f$
+ \end{example} 
+
+\begin{definition}{Tail Recursive Expression}
+A PicoML expression $e$ is said to be tail-recursive with respect to an identifier $f$ if it is recursive in $f$ and one of the following holds:
+\begin{itemize}
+\item $e$ is a constant $c$ or a variable $v$
+\item $e$ is of the form $\odot e'$, and $e'$ is not recursive in $f$
+\item $e$ is of the form $e' \oplus e''$, and none of $e'$ and $e''$ is recursive in $f$
+\item $e$ is of the form $e' e''$ and $e''$ is not recursive in $f$ and $e'$ is tail-recursive in $f$
+\item $e$ is of the form $\ifexp{e'}{e''}{e'''}$ if $e'$ is not recursive in $f$, and both $e''$ and $e'''$ are tail recursive in $f$
+\item $e$ is of the form $\funexp{x}{e'}$
+\item $e$ is of the form $\letinexp{x}{e'}{e''}$ and, either
+  \begin{itemize}
+   \item $x$ is not $f$ (that is, f has the older binding in $e''$), $e'$ is not recursive in $f$, and $e''$ is tail recursive in $f$, or
+   \item $x$ is $f$ (that is, the binding of $f$ is updated in $e''$), and $e'$ is tail recursive in $f$
+  \end{itemize}
+\item $e$ is of the form $\letrecinexp{g}{x}{e'}{e''}$, and, one of the following is true
+  \begin{itemize}
+   \item $g$ is $f$ (that is, f is given a new binding in $e''$), or
+   \item $g$ is not $f$, (here, f retains its binding in $e''$), and $e''$ is tail recursive in $f$
+  \end{itemize}
+\item $e$ is of the form $\mathtt{try} \; e' \; \mathtt{with} \; i1 \arr e_{i1} \; | \; i2 \arr e_{i2} \; | \; \ldots \; | \; ik \arr e_{ik}$, and
+  \begin{itemize}
+   \item $e'$ is not tail recursive in f, and
+   \item Each of $e_{i1}$ through $e_{ik}$ is tail recursive in $f$
+  \end{itemize}
+\end{itemize}
+\end{definition}
+
+
+\begin{definition}[Tail Recursive Declaration]
+\label{def:dectailrec}
+A PicoML declaration is said to be tail recursive if one of the following hold:
+\begin{itemize}
+ \item It is of the form $e$
+ \item It is of the form $\mathtt{let} \; x \; \mathtt{=} \; e$
+ \item It is of the form $\mathtt{let} \; \mathtt{rec} \; f \; x \; \mathtt{=} \; e$ and $e$ is tail recursive in $f$
+\end{itemize}
+\end{definition}

@@ -1,0 +1,74 @@
+\documentclass{article}
+
+\input{header}
+
+\title{Checking Tail Recursion in PicoML}
+\author{Umang Mathur \\ \href{mailto:umathur3@illinois.edu}{umathur3@illinois.edu}
+\and Chia-Hao Hsieh \\ \href{mailto:chsieh17@illinois.edu}{chsieh17@illinois.edu}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+\input{overview}
+
+\newpage
+
+\section{Definitions}
+Before we describe our implementation, it would be useful to go through some notations and definitions.\\
+The purpose of the definitions is to give a nice characterization of the problem we wish to address.\\
+
+\input{formal}
+
+\newpage 
+\section{Implementation}
+For the purpose of the project, we check if a PicoML declaration is  tai recursive or not, in the following two ways :
+
+\begin{enumerate}
+ \item We check if the declaration satisfies Definition~\ref{def:dectailrec} given earlier
+ \item We transform the delaration into Continuation Passing style, and check for some conditions (covered later)
+\end{enumerate}
+
+\subsection{Checking Tail Recursion in PicoML}
+
+
+
+Here is our proposal:
+
+\subsection{Tail Recursive Checking for CPS Based on MP7}
+
+Here is our proposal:
+
+\subsection{Code Structure}
+Describe the code structure.
+Justify that the code is modular
+
+\section{Tests}
+[TODO]We put our test cases into grader of MP6 and MP7. So to test our programs, just run './grader' after 'make', as in what we have to do in the assignments. 
+
+\newpage
+
+\section{Listing}
+
+\input{listing}
+
+\begin{thebibliography}{9}
+  
+\bibitem{Soare96}
+    Robert I. Soare,
+    \emph{Computability and recursion},
+    BULL. SYMBOLIC LOGIC,
+    1996
+
+\bibitem{OlderMP}
+  Programming Languages and Compilers : CS421,
+  Fall 2015,
+  University of Illinois, Urbana Champaign,
+\href{https://courses.engr.illinois.edu/cs421/mps/index.html}{Course Web Page}
+\end{thebibliography}
+
+
+\end{document}
