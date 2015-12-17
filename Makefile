@@ -1,17 +1,66 @@
+OCAMLC=ocamlc
+OCAMLLEX=ocamllex
+OCAMLYACC=ocamlyacc
 GMAKE=make
+RM=rm
+CP=cp
+LN=ln
+MV=mv
+TAR=tar
+GZIP=gzip
+MKDIR=mkdir
 
-all: tr cpstr
+MODULE_COMMON=definitions
+MODULE_TAILREC=checkTailRec
+MODULE_TAILREC_CPS=checkTailRecCPS
 
-tr:
-	$(GMAKE) -C tailrec/
-	ln -sf tailrec/tailRecPicoMLInt ./tailRecPicoML
+OBJLANG=tailRecPicoML
+INTERACTIVE_EXE=$(OBJLANG)Int
+TESTING_EXE=$(OBJLANG)Test
 
-cpstr:
-	$(GMAKE) -C tailrecCPS/
-	ln -sf tailrecCPS/tailRecPicoMLInt ./tailRecPicoMLCPS
+#######################################################################
+# DISTFILES define what goes into mpNtest.tgz distributions
+#######################################################################
+
+all: $(INTERACTIVE_EXE) ${TESTING_EXE}
+
+IMPLEMENTATIONS= $(MODULE_COMMON).cmo ${MODULE_TAILREC}.cmo ${MODULE_TAILREC_CPS}.cmo $(OBJLANG)parse.cmo $(OBJLANG)lex.cmo
+
+OBJECTS=$(IMPLEMENTATIONS)
+
+STUDENT_CLEAN=$(MODULE_TAILREC).cm? $(MODULE_TAILREC_CPS).cm? util.o $(INTERACTIVE_EXE) $(INTERACTIVE_EXE)*.cm? ${TESTING_EXE} ${TESTING_EXE}.cm? \
+		${MODULE_COMMON}.cm? ${OBJLANG}parse.cm? ${OBJLANG}lex.cm? ${OBJLANG}parse.ml ${OBJLANG}parse.mli ${OBJLANG}lex.ml
+
+$(INTERACTIVE_EXE): $(OBJECTS) $(INTERACTIVE_EXE).ml
+	$(OCAMLC) -c $(INTERACTIVE_EXE).ml
+	$(OCAMLC) -o $(INTERACTIVE_EXE) $(IMPLEMENTATIONS) $(INTERACTIVE_EXE).cmo 
+
+$(TESTING_EXE): $(OBJECTS) $(TESTING_EXE).ml
+	$(OCAMLC) -c $(TESTING_EXE).ml
+	$(OCAMLC) -o $(TESTING_EXE) $(IMPLEMENTATIONS) $(TESTING_EXE).cmo 
+
+########################################################################
+# if solution.ml exists, compile it.  otherwise assume solution.cm{o,i}
+# exist.
+########################################################################
+$(MODULE_COMMON).cmo: $(MODULE_COMMON).ml
+	$(OCAMLC) -c $(MODULE_COMMON).ml 
+
+$(MODULE_TAILREC).cmo: $(MODULE_TAILREC).ml
+	$(OCAMLC) -c $(MODULE_TAILREC).ml 
+
+$(MODULE_TAILREC_CPS).cmo: $(MODULE_TAILREC_CPS).ml
+	$(OCAMLC) -c $(MODULE_TAILREC_CPS).ml 
+
+$(OBJLANG)parse.cmo: $(OBJLANG)parse.mly
+	$(OCAMLYACC) $(OBJLANG)parse.mly
+	$(OCAMLC) -c $(OBJLANG)parse.mli
+	$(OCAMLC) -c $(OBJLANG)parse.ml
+
+$(OBJLANG)lex.cmo: $(OBJLANG)lex.mll
+	$(OCAMLLEX) $(OBJLANG)lex.mll
+	$(OCAMLC) -c $(OBJLANG)lex.ml
 
 clean:
-	$(GMAKE) -C tailrec/ clean
-	$(GMAKE) -C tailrecCPS/ clean
-	rm -f tailRecPicoML
-	rm -f tailRecPicoMLCPS
+	#$(GMAKE) -C lib clean
+	$(RM) -f $(STUDENT_CLEAN)

@@ -1,18 +1,28 @@
-(* File: definitions.ml *)
+(* File: mp7common.ml *)
 
 (* expressions for PicoML *)
-type const = TrueConst | FalseConst | IntConst of int | FloatConst of float
-           | StringConst of string | NilConst | UnitConst
+type const = BoolConst of bool | IntConst of int | FloatConst of float
+           | StringConst of string | NilConst | UnitConst 
 
 let string_of_const c =
     match c 
     with IntConst n    -> if n < 0 then "~"^string_of_int(abs n) else string_of_int n
-       | TrueConst     -> "true"
-       | FalseConst    -> "false"
+       | BoolConst b   -> if b then "true" else "false"
        | FloatConst f  -> string_of_float f
        | StringConst s -> "\"" ^ s ^ "\""
        | NilConst      -> "[]"
        | UnitConst     -> "()"
+
+type mon_op = IntNegOp | HdOp | TlOp | FstOp | SndOp | PrintStringOp
+
+let string_of_mon_op m =
+    match m
+    with IntNegOp   -> "~"
+       | HdOp  -> "hd"
+       | TlOp  -> "tl"
+       | FstOp   -> "fst"
+       | SndOp   -> "snd"
+       | PrintStringOp  -> "print_string"
 
 type bin_op = IntPlusOp | IntMinusOp | IntTimesOp | IntDivOp
            | FloatPlusOp | FloatMinusOp | FloatTimesOp | FloatDivOp 
@@ -36,17 +46,6 @@ let string_of_bin_op = function
    | ExpoOp -> "**"
    | ModOp   -> "mod"
 
-type mon_op = HdOp | TlOp | PrintOp | IntNegOp | FstOp | SndOp
-
-let string_of_mon_op m =
-    match m
-    with HdOp  -> "hd"
-       | TlOp  -> "tl"
-       | PrintOp  -> "print_string"
-       | IntNegOp   -> "~"
-       | FstOp   -> "fst"
-       | SndOp   -> "snd"
-
 type exp =  (* Exceptions will be added in later MPs *)
    | VarExp of string                    (* variables *)
    | ConstExp of const                   (* constants *)
@@ -57,7 +56,7 @@ type exp =  (* Exceptions will be added in later MPs *)
    | FunExp of string * exp              (* fun x -> e1 *)
    | LetInExp of string * exp * exp      (* let x = e1 in e2 *)
    | LetRecInExp of string * string * exp * exp (* let rec f x = e1 in e2 *)
-   | RaiseExp of exp                            (* raise e *)
+   | RaiseExp of exp                     (* raise e *)
    | TryWithExp of (exp * int option * exp * (int option * exp) list)
 		                   (* try e with i -> e1 | j -> e1 | ... | k -> en *)
 
@@ -121,7 +120,7 @@ let rec delete_duplicates = function
    []    -> []
  | x::xs -> x::delete_duplicates (drop x xs)
 
-(*type system*)
+(********************** Type System Infrastructure **********************)
 
 type typeVar = int
 
@@ -137,11 +136,11 @@ let string_of_typeVar n =
           | ([s],l) -> ([s],l)
           | (x::xs,l) -> ((x - 1) :: xs, l)
    in
-   let s = (String.create len)
+   let s = (Bytes.create len)
    in
    let _ =
     List.fold_left
-    (fun n c -> (String.set s n c; n + 1))
+    (fun n c -> (Bytes.set s n c; n + 1))
     0
     (List.map (fun x -> Char.chr(x + 97)) num_list)  (* Char.code 'a' = 97 *)
    in "'"^s;;
@@ -212,7 +211,7 @@ let string_op_ty =
 
 (* fixed signatures *)
 let const_signature const = match const with
-   TrueConst | FalseConst -> (([], bool_ty):polyTy)
+   BoolConst b -> (([], bool_ty):polyTy)
  | IntConst n -> ([], int_ty)
  | FloatConst f -> ([], float_ty)
  | StringConst s -> ([], string_ty)
@@ -240,7 +239,9 @@ let binop_signature binop = match binop with
        let beta = TyVar 1 in
            ([0;1],
             mk_fun_ty alpha (mk_fun_ty beta (mk_pair_ty alpha beta)))
-   | EqOp -> ([],mk_fun_ty int_ty (mk_fun_ty int_ty bool_ty))
+(*   | EqOp -> ([],mk_fun_ty int_ty (mk_fun_ty int_ty bool_ty)) *)
+   | EqOp ->
+     let alpha = TyVar 0 in ([0],mk_fun_ty alpha (mk_fun_ty alpha bool_ty))
    | GreaterOp ->
      let alpha = TyVar 0 in ([0],mk_fun_ty alpha (mk_fun_ty alpha bool_ty))
 
@@ -248,7 +249,7 @@ let monop_signature monop = match monop with
     | HdOp -> let alpha = TyVar 0 in([0], mk_fun_ty (mk_list_ty alpha) alpha)
     | TlOp -> let alpha = TyVar 0 in
                   ([0], mk_fun_ty (mk_list_ty alpha) (mk_list_ty alpha))
-    | PrintOp -> ([], mk_fun_ty string_ty unit_ty)
+    | PrintStringOp -> ([], mk_fun_ty string_ty unit_ty)
     | IntNegOp -> ([], mk_fun_ty int_ty int_ty)
     | FstOp -> let t1,t2 = TyVar 0,TyVar 1
              in ([0;1],mk_fun_ty (mk_pair_ty t1 t2) t1)
@@ -285,6 +286,74 @@ let make_env x y = ([(x,y)]:'a env)
 let lookup_env (gamma:'a env) x = lookup gamma x
 let sum_env (delta:'a env) (gamma:'a env) = ((delta@gamma):'a env)
 let ins_env (gamma:'a env) x y = sum_env (make_env x y) gamma
+
+(****************** Unification, Adapted from MP5 ***********************)
+
+type substitution = (typeVar * monoTy) list
+
+let subst_fun (s:substitution) n = (try List.assoc n s with _ -> TyVar n)
+
+(*unification algorithm*)
+(* Problem 1 *)
+let rec contains n ty =
+  match ty with
+    TyVar m -> n=m
+  | TyConst(st, typelst) ->
+     List.fold_left (fun xl x -> if xl then xl else contains n x) false typelst;;
+
+(* Problem 2 *)
+let rec substitute ie ty = 
+  let n,sub = ie 
+  in match ty with
+       TyVar m -> if n=m then sub else ty
+     | TyConst(st, typelist) -> TyConst(st, List.map (fun t -> substitute ie t) typelist);;
+
+let polyTySubstitute s (pty:polyTy) =
+    match s with  (n,residue) ->
+    (match pty with (bound_vars, ty) -> 
+           if List.mem n bound_vars then pty
+           else ((bound_vars, substitute s ty):polyTy))
+    
+
+(* Problem 3 *)
+let rec monoTy_lift_subst (s:substitution) ty =
+  match ty with
+    TyVar m -> subst_fun s m
+  | TyConst(st, typelst) ->  TyConst(st, List.map (fun t -> monoTy_lift_subst s t) typelst);;
+
+(* Problem 4 *)
+let rec unify eqlst : substitution option =
+  let rec addNewEqs lst1 lst2 acc =
+    match lst1,lst2 with
+      [],[] -> Some acc
+    | t::tl, t'::tl' -> addNewEqs tl tl' ((t,t')::acc)
+    | _ -> None
+  in
+  match eqlst with
+    [] -> Some([])
+    (* Delete *)
+  | (s,t)::eqs when s=t -> unify eqs
+    (* Eliminate *)
+  | (TyVar(n),t)::eqs when not(contains n t)-> 
+      let eqs' = List.map (fun (t1,t2) -> (substitute (n,t) t1 , substitute (n,t) t2)) eqs
+      in (match unify eqs' with
+           None -> None
+         | Some(phi) -> Some((n, monoTy_lift_subst phi t):: phi))
+    (* Orient *)
+  | (TyConst(str, tl), TyVar(m))::eqs -> unify ((TyVar(m), TyConst(str, tl))::eqs)
+    (* Decompose *)
+  | (TyConst(str, tl), TyConst(str', tl'))::eqs when str=str' -> 
+      (match (addNewEqs tl tl' eqs) with
+        None -> None
+      | Some l -> unify l)
+    (* Other *)
+  | _ -> None
+;;
+
+
+
+
+(****************** Support Infrastructure for  MP6 ***********************)
 
 (*judgment*) 
 type judgment =
@@ -323,38 +392,6 @@ let string_of_proof p =
                  string_of_assum depth lst ps
   in
     string_of_proof_aux p 0 []^ "\n\n"
-
-type substitution = (typeVar * monoTy) list
-
-let subst_fun (s:substitution) n = (try List.assoc n s with _ -> TyVar n)
-
-(*unification algorithm*)
-(* Problem 1 *)
-let rec contains n ty =
-  match ty with
-    TyVar m -> n=m
-  | TyConst(st, typelst) ->
-     List.fold_left (fun xl x -> if xl then xl else contains n x) false typelst;;
-
-(* Problem 2 *)
-let rec substitute ie ty = 
-  let n,sub = ie 
-  in match ty with
-       TyVar m -> if n=m then sub else ty
-     | TyConst(st, typelist) -> TyConst(st, List.map (fun t -> substitute ie t) typelist);;
-
-let polyTySubstitute s (pty:polyTy) =
-    match s with  (n,residue) ->
-    (match pty with (bound_vars, ty) -> 
-           if List.mem n bound_vars then pty
-           else ((bound_vars, substitute s ty):polyTy))
-    
-
-(* Problem 3 *)
-let rec monoTy_lift_subst (s:substitution) ty =
-  match ty with
-    TyVar m -> subst_fun s m
-  | TyConst(st, typelst) ->  TyConst(st, List.map (fun t -> monoTy_lift_subst s t) typelst);;
 
 let rec monoTy_rename_tyvars s mty =
     match mty with
@@ -413,38 +450,6 @@ let env_rename_tyvars s (env: 'a env) =
 let env_lift_subst s (env:'a env) =
     ((List.map (fun (x,polyTy) -> (x,polyTy_lift_subst s polyTy)) env):'a env)
 
-
-(* Problem 4 *)
-let rec unify eqlst : substitution option =
-  let rec addNewEqs lst1 lst2 acc =
-    match lst1,lst2 with
-      [],[] -> Some acc
-    | t::tl, t'::tl' -> addNewEqs tl tl' ((t,t')::acc)
-    | _ -> None
-  in
-  match eqlst with
-    [] -> Some([])
-    (* Delete *)
-  | (s,t)::eqs when s=t -> unify eqs
-    (* Eliminate *)
-  | (TyVar(n),t)::eqs when not(contains n t)-> 
-      let eqs' = List.map (fun (t1,t2) -> (substitute (n,t) t1 , substitute (n,t) t2)) eqs
-      in (match unify eqs' with
-           None -> None
-         | Some(phi) -> Some((n, monoTy_lift_subst phi t):: phi))
-    (* Orient *)
-  | (TyConst(str, tl), TyVar(m))::eqs -> unify ((TyVar(m), TyConst(str, tl))::eqs)
-    (* Decompose *)
-  | (TyConst(str, tl), TyConst(str', tl'))::eqs when str=str' -> 
-      (match (addNewEqs tl tl' eqs) with
-        None -> None
-      | Some l -> unify l)
-    (* Other *)
-  | _ -> None
-;;
-
-
-(*-----------------------------------------------*)
 
 (*constraint list*)
 type consList = (monoTy * monoTy) list
@@ -621,14 +626,10 @@ let canon_dec prf_opt =
       ([],1)
   in Some(proof_rename_tyvars varlst prf)
 
-(* ML3's inferencer *)
+(********************* MP6's inferencer *********************)
 
 let rec gather_exp_ty_substitution gamma exp tau =
     let judgment = ExpJudgment(gamma, exp, tau) in
-(*
-    let _ = print_string ("Trying to type "^ string_of_judgment judgment^"\n") in
-*)
-    let result =
     match exp
     with ConstExp c ->
          let tau' = const_signature c in
@@ -765,16 +766,6 @@ let rec gather_exp_ty_substitution gamma exp tau =
            | Some (rev_pflist, comp_subst) ->
              Some(Proof(List.rev rev_pflist, judgment), comp_subst)))
 
-in (
-(*
-    (match result
-     with None ->
-      print_string ("Failed to type "^string_of_judgment judgment^"\n")
-     | Some (_, subst) -> print_string ("Succeeded in typing "^
-                               string_of_judgment judgment^"\n"^
-"  with substitution "^ string_of_substitution subst ^"\n"));
-*)
-    result)
 
 let rec gather_dec_ty_substitution gamma dec =
     match dec with 
@@ -809,99 +800,168 @@ let rec gather_dec_ty_substitution gamma dec =
               in 
 	      Some(Proof([pf],DecJudgment (gamma, dec, delta_env)),sigma))
 
+(***************** Adapted Infrstructure for MP5, CPS *********************)
+type cps_cont = 
+   ContVarCPS of int                   (* _ki *)
+ | External
+ | FnContCPS of string * exp_cps       (* FN x -> exp_cps *)
+ | ExnMatch of exn_cont                (* i1 |-> ec1; ... in |-> ecn *)
 
-(*********************************************)
-(*                  values                   *)
+and exn_cont =
+   ExnContVarCPS of int
+ | EmptyExnContCPS
+ | UpdateExnContCPS of (int option * exp_cps) list * exn_cont
 
-type memory = (string * value) list
-and value =
-    UnitVal                                       | TrueVal | FalseVal
-  | IntVal of int                                 | FloatVal of float
-  | StringVal of string                           | PairVal of value * value
-  | Closure of string * exp * memory              | ListVal of value list
-  | RecVarVal of string * string * exp * memory   | Exn of int
+and exp_cps =
+   VarCPS of cps_cont * string
+ | ConstCPS of cps_cont * const
+ | MonOpAppCPS of cps_cont * mon_op * string * exn_cont
+ | BinOpAppCPS of cps_cont * bin_op * string * string * exn_cont
+ | IfCPS of string * exp_cps * exp_cps
+ | AppCPS of cps_cont * string * string * exn_cont
+ | FunCPS of cps_cont * string * int * int * exp_cps
+ | FixCPS of cps_cont * string * string * int * int * exp_cps 
 
-let make_mem x y = ([(x,y)]:memory)
-let rec lookup_mem (gamma:memory) x =
-  match gamma with
-     []        -> raise (Failure ("identifier "^x^" unbound"))
-   | (y,z)::ys -> if x = y then z else lookup_mem ys x
-let sum_mem (delta:memory) (gamma:memory) = ((delta@gamma):memory)
-let ins_mem (gamma:memory) x y = sum_mem (make_mem x y) gamma
+let (freshIntName , resetIntNameInt) =
+    let intNameInt = ref 0 in
+    let n() = (let x = !intNameInt in intNameInt := x + 1; string_of_int x) in
+    let r() = intNameInt := 0 in
+    (n,r)
 
-(*value output*)
-let rec print_value v =
-   match v with
-    UnitVal           -> print_string "()"
-  | IntVal n          -> if n < 0 then (print_string "~"; print_int (abs n)) else print_int n 
-  | FloatVal r        -> print_float r
-  | TrueVal		-> print_string "true"
-  | FalseVal	     -> print_string "false"
-  | StringVal s       -> print_string ("\"" ^ s ^ "\"")
-  | PairVal (v1,v2)   -> print_string "(";
-                         print_value v1; print_string ", ";
-                         print_value v2;
-                         print_string ")";
-  | ListVal l         -> print_string "[";
-                         (let rec pl = function
-                              []     -> print_string "]"
-                            | v::vl  -> print_value v;
-                                        if vl <> []
-                                        then
-                                           print_string "; ";
-                                        pl vl
-                              in pl l)
-  | Closure (x, e, m) -> print_string ("<some closure>")
-  | RecVarVal (f, x, e, m)  -> print_string ("<some recvar>")
-  | Exn n -> (print_string "(Exn "; print_int n; print_string ")")
+let (next_index, reset_index) = 
+    let count = ref 0 in
+    let n() = (let x = !count in count := x + 1; x) in
+    let r() = count := 0 in
+    (n,r)
 
-let compact_memory m =
-  let rec comp m rev_comp_m =
-      (match m with [] -> List.rev rev_comp_m
-        | (x,y) :: m' ->
-           if List.exists (fun (x',_) -> x = x') rev_comp_m
-              then comp m' rev_comp_m
-           else comp m' ((x,y)::rev_comp_m))
-  in comp m []
+let rec cps_exp e k ke = 
+   match e with 
+(*[[x]]k,ke = k x*)
+     VarExp x -> (VarCPS (k, x))
+(*[[c]]k,ke = k x*)
+   | ConstExp c -> (ConstCPS (k, c))
+(*[[~ e]]k,ke = [[e]](FN r ke -> k (~ r)), ke, *)
+   | MonOpAppExp (m, e) ->
+      let r = freshIntName() in
+      cps_exp e ((*ClosedCPSCont*)(FnContCPS (r, MonOpAppCPS (k, m, r, ke)))) ke
+(*[[(e1 + e2)]]k,ke = [[e1]](FN r -> [[e2]](FN s -> k (r + s)),ke),ke*)
+   | BinOpAppExp (b, e1, e2) ->
+      let r = freshIntName()  in 
+      let s = freshIntName()  in 
+      let e2CPS =
+       cps_exp e2 ((*ClosedCPSCont*)(FnContCPS (s, BinOpAppCPS(k, b, r, s, ke)))) ke in
+      cps_exp e1 ((*ClosedCPSCont*)(FnContCPS (r, e2CPS))) ke
+(*[[if e1 then e2 else e3]]k,ke = [[e1]]((FN r -> if r then [[e2]]k,ke else [[e3]]k,ke),ke*)
+   | IfExp (e1,e2,e3) ->
+      let r =  freshIntName() in 
+      let e2cps = cps_exp e2 k ke  in
+      let e3cps = cps_exp e3 k ke in 
+      cps_exp e1 ((*ClosedCPSCont*)(FnContCPS(r, IfCPS(r, e2cps, e3cps)))) ke
+(*[[e1 e2]]k,ke = [[e1]](FN r -> [[e2]](FN s -> (r s k ke)),ke),ke*)
+   | AppExp (e1,e2) -> 
+      let r = freshIntName() in
+      let s = freshIntName() in
+      let e2cps =
+          cps_exp e2 ((*ClosedCPSCont*)(FnContCPS (s, AppCPS(k, r, s, ke)))) ke in
+      cps_exp e1 ((*ClosedCPSCont*)(FnContCPS (r, e2cps))) ke
+(*[[fun x -> e]]k,ke = k(FUN x -> fn kx kes-> [[e]]kx,kes) *)
+   | FunExp (x,e) ->
+     let (i,j) = (next_index(), next_index()) in
+     let ecps = cps_exp e (ContVarCPS i) (ExnContVarCPS j) in
+     FunCPS (k, x, i, j, ecps)
+(*[[let x = e1 in e2)]]k,ke = [[e1]](FN x -> [[e2]]k,ke),ke *)
+   | LetInExp (x,e1,e2) -> 
+     let e2cps = cps_exp e2 k ke in 
+     let fnk = FnContCPS(x,e2cps) in cps_exp e1 fnk ke
+(*[[let rec f x = e1 in e2]]k,ke =
+  (FN f -> [[e2]]k,ke)(FIX f. FUN x -> fn k',ke' => [[e1]]k',ke')*)
+   | LetRecInExp(f,x,e1,e2) ->
+     let (i,j) = (next_index(), next_index()) in
+     let e1cps = cps_exp e1 (ContVarCPS i) (ExnContVarCPS j)  in 
+     let e2cps = cps_exp e2 k ke in 
+     let fnk = FnContCPS(f,e2cps) in
+     FixCPS(fnk,f,x,i,j,e1cps)
+(* [[try e with n0 -> e0 | ... | nm -> em]]k,ke =
+   [[e]]k, [(n0 |-> [[e0]]k,ke); ... (nm |-> [[em]]k,ke)] + ke *)
+   | TryWithExp(e, n0, e0, rem_match) ->
+     let match_cps =
+         List.fold_right
+          (fun (n,en) -> fun exn_match ->
+           let ecps = cps_exp en k ke in
+               (n, ecps)::exn_match)
+          ((n0, e0):: rem_match)
+          []
+     in cps_exp e k (UpdateExnContCPS(match_cps, ke))
 
-(*memory output*)
-let print_memory m =
-    let cm = compact_memory m in
-    let rec print_m m = 
-    (match m with
-        []           -> ()
-      | (x, v) :: m' -> print_m m';
-                        print_string ("val "^x ^ " = ");
-                        print_value v;
-                        print_string (";\n") ) in
-    print_m cm
+(* [[raise e]]k,ke = [[e]](FN r -> match_exn r with ke), ke *)
+   | RaiseExp e -> cps_exp e ((*ClosedCPSCont*)(ExnMatch ke)) ke
 
-
-(* Pervasive memory *)
-
-(* NOTE: below not changed in 2015 *)
 (*
-let pervasive_memory =
-  let bi s = (s, BuiltInOpVal s) in
-  let perv1 =
-   List.map bi
-   ["+"; "-"; "*"; "/"; "<"; ">"; "<="; ">="; "mod"; "div";
-    "+."; "-."; "*."; "/."; "**"; "::"; "head"; "tail"; "="; "^";
-     "fst"; "snd"]
-  in
-  let and_val = Closure ("p",
-   IfThenElse (App (Id "fst", Id "p"), App (Id "snd", Id "p"), Bool false),
-   [("fst", BuiltInOpVal "fst"); ("snd", BuiltInOpVal "snd")]) in
-  let or_val = Closure ("p",
-   IfThenElse (App (Id "fst", Id "p"), Bool true, App (Id "snd", Id "p")),
-   [("fst", BuiltInOpVal "fst"); ("snd", BuiltInOpVal "snd")]) in
-  let not_val = Closure ("b", IfThenElse (Id "b", Bool false, Bool true), [])
-  in
-("and", and_val) ::
-("or", or_val) ::
-("not", not_val) ::
-("nil", ListVal []) ::
-perv1;;
+and
+   cps_dec dec ecps ke =
+(*   <<val x = e>>ecps,ke = [[e]](FN x -> ecps),ke *)
+   match dec with Val (x,e) -> cps_exp e ((*ClosedCPSCont*)(ContCPS (x, ecps))) ke
+(*   <<dec1 dec2>>ecps, ke = <<dec1>>(<<dec2>>_ecps,ke),ke *)
+   | Seq (dec1,dec2) -> let ecps2 =
+     cps_dec dec2 ecps ke in cps_dec dec1 ecps2 ke
+   | Local (dec1, dec2) ->  raise (Failure "Not implemented yet")
+(*   <<val rec f = fn x => e>>_ecps = \mu x. [[e]]_FN f -> ecps *)
+   | Rec (f,x,e) ->
+     let (i,j) = (next_index(),next_index()) in
+     let ecps2 = cps_exp e (ContVarCPS i) (ExnContVarCPS j) in
+     FixCPS ((*ClosedCPSCont*)(ContCPS (f, ecps)), f, x, i, j, ecps2)
 *)
 
 
+let rec string_of_exp_cps ext_cps = 
+    match ext_cps 
+    with VarCPS (k,x) -> 
+        paren_string_of_cps_cont k ^ " " ^ x 
+    | ConstCPS (k,c) -> 
+        paren_string_of_cps_cont k ^ " " ^ string_of_const c 
+    | MonOpAppCPS (k,m,r, exncont) -> 
+        paren_string_of_cps_cont k ^ "(" ^  string_of_mon_op m ^ " " ^ r ^ ")" 
+    | BinOpAppCPS (k,b,r,s, exncont) -> 
+        paren_string_of_cps_cont k ^ "(" ^ r ^ " " ^ string_of_bin_op b ^ " " ^ s ^")" 
+    | IfCPS (b,e1,e2) -> 
+        "IF "^b^" THEN "^ string_of_exp_cps e1 ^" ELSE "^string_of_exp_cps e2 
+    | AppCPS (k,r,s, exncont) -> 
+        "("^r ^ " " ^ s ^ " " ^ paren_string_of_cps_cont k ^ ")"  
+    | FunCPS (k, x, i, j, e) ->  
+        (paren_string_of_cps_cont k) ^ " (" ^ (string_of_funk x e i j) ^ ")" 
+    | FixCPS (k,f,x,i,j, e) -> 
+        paren_string_of_cps_cont k ^ "(FIX "^ f ^". " ^ (string_of_funk x e i j) ^ ")" 
+
+and string_of_funk x e i j = 
+    "FUN " ^ x  ^ " -> " ^ "fn " ^ (string_of_int i) ^ ", " ^ (string_of_int j) ^ " => " ^ string_of_exp_cps e 
+
+and 
+string_of_cps_cont k = 
+    match k 
+    with External -> "<external>" 
+    | ContVarCPS i -> "_k" ^ (string_of_int i) 
+    | FnContCPS (x, e) -> "FN " ^ x ^ " -> " ^ string_of_exp_cps e 
+    | ExnMatch exncont -> "<some exception>" 
+
+and 
+
+paren_string_of_cps_cont k = 
+    match k with FnContCPS _ -> "(" ^ string_of_cps_cont k ^ ")" 
+    | _ -> string_of_cps_cont k 
+
+
+let print_direct_result b = 
+    if b 
+        then print_string "Direct: Tail Recursive\n"
+    else 
+        print_string "Direct: Not Tail Recursive\n"
+
+let print_cps_result b = 
+    if b 
+        then print_string "CPS-transformed: Tail Recursive\n"
+    else 
+        print_string "CPS-transformed: Not Tail Recursive\n"
+
+let print_match d c = 
+    if not (d=c)
+        then print_string "\n[!] Results don't match!\n\n";;

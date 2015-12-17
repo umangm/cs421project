@@ -5,6 +5,7 @@ tailRecPicoMLTest.ml
 open Definitions
 open TailRecPicoMLparse
 open TailRecPicoMLlex
+open CheckTailRec
 open CheckTailRecCPS
 
 let check str =
@@ -27,11 +28,11 @@ let check str =
                 print_string "\ndoes not type check\n"
                 )
             | Some (Proof(hyps,judgement)) ->
-                (
-                match check_tail_recursion dec 
-                with true -> print_string "Tail Recursive!\n"
-                | false -> print_string "Not Tail Recursive!\n"
-                )  
+
+                let is_direct_true = (check_tail_recursion_direct dec ) in 
+                let is_cps_true = (check_tail_recursion_cps dec ) in 
+                ((print_direct_result is_direct_true);(print_cps_result is_cps_true);(print_match is_direct_true is_cps_true))
+                
         with Failure s -> 
             (
             print_newline();

@@ -1,7 +1,3 @@
-(*
-checkTailRecCPS.ml - DO NOT EDIT
- *)
-
 open Definitions
 
 let rec convert_f_exp e name_of_f = 
@@ -11,9 +7,6 @@ let rec convert_f_exp e name_of_f =
     with  ConstCPS (k, c) -> 
         convert_f_cont k name_of_f
     | VarCPS (k, g) -> 
-        (*
-        print_string "\nVarCPS \n";
-        *)
             (
             match k 
             with FnContCPS (number_of_f, e') -> 
@@ -26,34 +19,16 @@ let rec convert_f_exp e name_of_f =
             | _ -> []
             )
     | MonOpAppCPS (k, _, _, _) -> 
-        (*
-        print_string "\nMonOpAppCPS \n";
-        *)
         convert_f_cont k name_of_f
     | BinOpAppCPS (k , _, _, _, _) -> 
-        (*
-        print_string "\nBinOpAppCPS \n";
-        *)
         convert_f_cont k name_of_f
     | IfCPS (b, e1, e2) ->
-        (*
-        print_string "\nIfCPS \n";
-        *)
         (convert_f_exp e1 name_of_f)@(convert_f_exp e2 name_of_f)
     | AppCPS (k, _, _, _) ->
-        (*
-        print_string "\nAppCPS \n";
-        *)
         convert_f_cont k name_of_f
     | FunCPS (k, _, _, _, _) ->
-        (*
-        print_string "\nFunCPS \n";
-        *)
         convert_f_cont k name_of_f
     | FixCPS (k, _, _, _, _, _) ->
-        (*
-        print_string "\nFixCPS \n";
-        *)
         convert_f_cont k name_of_f
     )
 
@@ -112,7 +87,7 @@ and cont_tail_recursive original_k k flist =
     | ExnMatch ek -> true ;;
 
 
-let check_tail_recursion dec =
+let check_tail_recursion_cps dec =
     match dec
     with Anon e -> true
     | Let (x,e) -> true
