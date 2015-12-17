@@ -24,7 +24,7 @@ let speclist = [
 
 let _ =
     Arg.parse speclist (fun x -> raise (Arg.Bad ("Bad argument : " ^ x))) usage;
-    Printf.printf " %b %b\n" !is_cps_arg !is_direct_arg;
+    (*Printf.printf " %b %b\n" !is_cps_arg !is_direct_arg;*)
 
     print_endline "\nWelcome to the PicoML Tail-resursion Checker \n";
     let rec loop gamma mem = 
