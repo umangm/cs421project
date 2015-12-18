@@ -1,32 +1,34 @@
-5;;
-let f = 5;;
-let rec f x = f 5;;
-let rec f x = x + x;;
-let rec f x = hd x;;
-let rec f x = if (x=0) then 0 else f (x-1);;
-let rec f x = let f = 5 in f + f;;
-let rec f x = if (x=0) then 0 else x*(f (x-1));;
-let rec f x = if (x=0) then 0+0+0+0 else (f (x-1));;
-let rec f x = if (x=0) then 0 else (f (x-1))*x;;
-let rec f x = let x_0=(x=0) in if x_0 then 0 else (f (x-1));;
-let rec f x = let f_x_1=(f (x-1)) in if x = 0 then 0 else f_x_1;;
-let rec f x = let f = f in if (x=0) then 0 else (f (x-1));;
-let rec f x = let g = f in if (x=0) then 0 else g (x-1);;
-let rec f x = let g = (f (x-1)) in if (x=0) then 0 else g;;
-let rec f x = let g = x-1 in if (x=0) then 0 else f g;;
+5;; (* for dec = (Anon e) *)
+let f = 5;; (* for dec = Let (s, e) *)
+let rec f x = 100;; (* smoke test for ConstExp *)
+let rec f x = x;; (* smoke test for VarExp *)
+let rec f x = hd x;; (* smoke test for MonOp *)
+let rec f x = x + x;; (* smoke test for BinOp *)
+let rec f x = f 5;; (* smoke test for AppExp *)
+let rec f x = (fun x -> x);; (* smoke test for FunExp *)
+let rec f x = if (x=0) then 0 else f (x-1);; (* typical tail-recursive example *)
+let rec f x = if (x=0) then 0 else x * (f (x-1));; (* typical not tail-recursive example *)
+let rec f x = if (x=0) then 0 else f(f(f(f (x-1))));; (* a variavation of typical tail-recursive example *)
+let rec f x = let f = 5 in f + f;; (* for LetIn: redefine f *)
+let rec f x = if (x=0) then 0+0+0+0 else (f (x-1));; (* for BinOp *)
+let rec f x = (fun y -> 0) x;; (* more cases for FunExp and AppExp *)
 let rec f x = (fun x -> x * x) x ;;
 let rec f x = (fun x -> x * (f x)) x ;;
-let rec f x = (fun y -> 0) x;;
-let rec f x = let rec g y = y*y in if (x=0) then (g 0) else (f (x-1));;
+let rec f x = let x_0=(x=0) in if x_0 then 0 else (f (x-1));; (* more cases for LetIn *)
+let rec f x = let f_x_1=(f (x-1)) in if x = 0 then 0 else f_x_1;;
+let rec f x = let g = (f (x-1)) in if (x=0) then 0 else g;;
+let rec f x = let g = x-1 in if (x=0) then 0 else f g;;
+let rec f x = let g = (f x) + (f x) in if (x=0) then 0 else (f (x-1));;
+let rec f x = let g = (f x) + (f x) in if (x=0) then 0 else g;;
+let rec f x = let f = f in if (x=0) then 0 else (f (x-1));; (* more cases for LetIn: aliases *)
+let rec f x = let g = f in if (x=0) then 0 else g (x-1);;
+let rec f x = let g = f in g x;;
+let rec f x = let g = f in if (x=0) then 0 else (g (x-1));;
+let rec f x = let g = f in if (x=0) then 0 else (x-1)*(g (x-1));; (* Failed with both styles since we can't handle aliases well *)
+let rec f x = let g = f in let h = g in if (x=0) then 0 else (h (x-1))*(x-1);; (* Failed with both styles since we can't handle aliases well *)
+let rec f x = let rec g y = y * y in if (x=0) then (g 0) else (f (x-1));; (* more cases for LetRecIn *)
 let rec f x = let rec f y = 0 in if (x=0) then (f 0) else (f (x-1));;
 let rec f x = let rec g f = 0 in if (x=0) then (g 0) else (f (x-1));;
 let rec f x = let rec g y = (f y) in if (x=0) then 0 else (f (x-1));;
-let rec f x = let g = (f x) + (f x) in if (x=0) then 0 else (f (x-1));;
-let rec f x = let g = (f x) + (f x) in if (x=0) then 0 else g;;
 let rec f x = let rec g y = (f y) + (f y) in if (x=0) then 0 else g x;;
 let rec f x = let rec g y = (f y) in if (x=0) then 0 else (g (x-1));;
-let rec f x = if (x=0) then 0 else f(f (x-1));;
-let rec f x = let g = f in g x;;
-let rec f x = let g = f in if (x=0) then 0 else (g (x-1));;
-let rec f x = let g = f in if (x=0) then 0 else (x-1)*(g (x-1));;
-let rec f x = let g = f in let h = g in if (x=0) then 0 else (h (x-1))*(x-1);;
