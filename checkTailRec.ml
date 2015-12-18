@@ -16,7 +16,7 @@ let rec check_rec_f f e =
                 (
                 if (s=f) then false else ( (check_rec_f f e1) || (check_rec_f f e2) )
                 )
-    | FunExp (s, e1) -> if (s=f) then false else (check_rec_f f e1)
+    | FunExp (s, e1) -> false
     | AppExp (e1, e2) -> 
         (
         match e1
@@ -24,11 +24,7 @@ let rec check_rec_f f e =
         | _ -> (check_rec_f f e1) || (check_rec_f f e2)
         )
     | LetRecInExp (g, x, e1, e2) -> 
-        if ( (g=f) || (x=f)) 
-            then false 
-            else if (check_rec_f f e1) 
-                then (check_rec_f g e2)
-                else (check_rec_f f e2)
+        if (g=f) then false else (check_rec_f f e2)
     | RaiseExp e1 -> (check_rec_f f e1)
     | TryWithExp (e0, n1opt, e1, nopt_e_lst) ->
         (check_rec_f f e0) || (check_rec_f_lst f ((n1opt, e1) :: nopt_e_lst) )
