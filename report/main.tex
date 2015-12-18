@@ -24,36 +24,63 @@ The purpose of the definitions is to give a nice characterization of the problem
 \input{formal}
 
 \newpage 
+
 \section{Implementation}
-For the purpose of the project, we check if a PicoML declaration is  tai recursive or not, in the following two ways :
+For the purpose of the project, we check if a PicoML declaration is  tail recursive or not, in the following two ways :
 
-\begin{enumerate}
- \item We check if the declaration satisfies Definition~\ref{def:dectailrec} given earlier
- \item We transform the delaration into Continuation Passing style, and check for some conditions (covered later)
-\end{enumerate}
+\input{implementation}
 
-\subsection{Checking Tail Recursion in PicoML}
-
-
-
-Here is our proposal:
-
-\subsection{Tail Recursive Checking for CPS Based on MP7}
-
-Here is our proposal:
-
-\subsection{Code Structure}
-Describe the code structure.
-Justify that the code is modular
+\newpage
 
 \section{Tests}
-[TODO]We put our test cases into grader of MP6 and MP7. So to test our programs, just run './grader' after 'make', as in what we have to do in the assignments. 
+
+\input{test}
 
 \newpage
 
 \section{Listing}
 
-\input{listing}
+This sections gives a listing of the code written for the tool \tool
+
+\subsection{checkTailRec.ml}
+
+\input{codelisting/checkTailRec.ml}
+
+\newpage
+
+\subsection{checkTailRecCPS.ml}
+
+\input{codelisting/checkTailRecCPS.ml}
+
+\newpage
+
+\subsection{definitions.ml}
+
+\input{codelisting/definitions.ml}
+
+\newpage
+
+\subsection{tailRecPicoMLInt.ml}
+
+\input{codelisting/tailRecPicoMLInt.ml}
+
+\newpage
+
+\subsection{tailRecPicoMLTest.ml}
+
+\input{codelisting/tailRecPicoMLTest.ml}
+
+\newpage
+
+\subsection{tailRecPicoMLparse.mly}
+
+\input{codelisting/tailRecPicoMLparse.mly}
+
+\newpage
+
+\subsection{tailRecPicoMLlex.ml}
+
+\input{codelisting/tailRecPicoMLlex.mll}
 
 \begin{thebibliography}{9}
   

@@ -5,7 +5,7 @@ A PicoML-style expression $e$ is formally defined by the recursive grammar:
 e :=& \; c \; | \; v \; | \; \odot e \; | \; e \oplus e \; | \; \ifexp{e}{e}{e} \; | \; e \; e \; | \; \funexp{x}{e} \; \\
   &| \; \letinexp{x}{e}{e} \; | \; \letrecinexp{f}{x}{e}{e}  \; | \; \raiseexp{e} \;\\
   &| \; \mathtt{try} \; e \; \mathtt{with} \; \mathtt{e\_int\_list}
-i\end{split}
+\end{split}
 \end{equation*}
 
 where, $c$ is a constant, $v$ is a variable, and $\mathtt{e\_int\_list}$ is inductively defined as:
@@ -31,7 +31,7 @@ Declarations in PicoML are declarative statements that assign an expression to a
 
 
 \begin{definition}[Recursive Expression]
-An expression $e$ defined in PicoML is defined to be recursive with respect to an dentifier $f$ if 
+An expression $e$ defined in PicoML is defined to be recursive with respect to an identifier $f$ if 
 there is a subexpression $e'$ of $e$ (that is not lambda lifted) and has the form $f \; e''$, where $e''$ is an expression, 
 and no expression that contains $e'$ redefines $f$
 \end{definition}
@@ -42,10 +42,11 @@ Consider the PicoML declaration below:
 \[
 \mathtt{let} \; \mathtt{rec} \; f \; x \; = \; \ifexp{x = 0}{1}{f \; (f \; x - 1)} ;;
 \]
-Note that, the body of the above decclaration is recursive in $f$, based on the above definition.
+Note that, the body of the above declaration is recursive in $f$, based on the above definition.
  \end{example} 
 
 \begin{example}
+\label{ex:caveat}
 Consider the expression defined below:
 \[
 \mathtt{let} \; {g} \; = f \; \mathtt{in} \; g \; 3;; 
@@ -54,6 +55,7 @@ Note that, based on the definition above, the above expression is not recursive 
  \end{example} 
 
 \begin{definition}{Tail Recursive Expression}
+\label{def:exptailrec}
 A PicoML expression $e$ is said to be tail-recursive with respect to an identifier $f$ if it is recursive in $f$ and one of the following holds:
 \begin{itemize}
 \item $e$ is a constant $c$ or a variable $v$
@@ -79,6 +81,10 @@ A PicoML expression $e$ is said to be tail-recursive with respect to an identifi
   \end{itemize}
 \end{itemize}
 \end{definition}
+
+Note that, as discussed in Example~\ref{ex:caveat}, the above characterization does not check for tail recursion
+if the expression is tail recursive by virtue of aliases. While this takes our characterization further from being a complete characterization, 
+we do not compromise the soundness. That is to say, that if an expression is reported to tail recursive using our characterization, it cannot be a false alarm.
 
 
 \begin{definition}[Tail Recursive Declaration]

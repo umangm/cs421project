@@ -1,0 +1,64 @@
+\begin{enumerate}
+ \item We check if the declaration satisfies Definition~\ref{def:dectailrec} given earlier
+ \item We transform the declaration into Continuation Passing style, and check for some conditions (covered later)
+\end{enumerate}
+
+\subsection{Checking Tail Recursion in PicoML}
+
+For the, purpose of checking tail recursion in \tool
+we need to ensure that whenever an expression satisfies the conditions in Definition~\ref{def:exptailrec}, we should report so,
+and report 'not tail recursive' otherwise.
+In order to ensure that this is the case, our implementation has to be faithful to the definition.
+Because of the inductive nature of the definition, it becomes lot easier to implement the algorithm.
+
+Here is a brief snapshot of the algorithm:
+
+\input{tr.tex} 
+
+\subsection{Checking Tail Recursion in CPS expressions}
+
+Checking if a CPS transformed expression is tail recursive in $f$ basically amounts to checking if
+an application of $f$ is passed onto its original continuation (which happens to be a trivial check for our framework, because the
+original continuation is an artificially added dummy continuation, having a special signature).
+
+The idea behind this is that if the continuation for an application of $f$ is another function, it basically means that
+the application is not in the tail position, and there is some \emph{work to be done} after the application.
+\\\\
+Below is a snippet of the relevant part of the code:
+
+\input{cpstr}
+
+
+\subsection{Code Structure}
+
+The tool \tool has been developed in a series of iterations, and deliberate attempts have been made to keep
+the code concise and short.
+The total lines of code is about 1800, and the central parts of the code (where we implement the main algorithms), is about 200 lines (100 lines each for direct style and CPS style)
+
+The code has been kept modular, to the best possible extent.
+The following is a brief description of the various files:
+\begin{itemize}
+ \item \texttt{definitions.ml} ; Includes the various definitions for the types used in the tool. 
+ This file includes algorithms for unification, type-inference, transforming PicoML expressions in CPS etc., apart from basic utilities for printing various types.
+ Most of the parts in this file have been derived from MP7
+ \item \texttt{tailRecPicoMLlex.mll} : Includes the code for token generation for PicoML expressions, largely borrowed from ML4
+ \item \texttt{tailRecPicoMLparse.mly} : Includes the code for parsing PicoML expressions, largely borrowed from MP5
+ \item \texttt{checkTailRec.ml} : Contains the main algorithm for checking PicoML expressions and declarations for tail recursion
+ \item \texttt{checkTailRecCPS.ml} : Contains the main algorithm for checking CPS expressions and declarations for tail recursion
+ \item \texttt{tailRecPicoMLInt.ml} : Contains utilities for wrapping the main code for interactive use
+ \item \texttt{tailRecPicoMLTest.ml} : Contains utilities for wrapping the main code for non-interactive testing
+\end{itemize}
+
+\subsection{Comparison with Original Proposal}
+
+Below is the relevant part of the original proposal :
+
+\lstinputlisting[language={}]{proposal.txt}
+
+Clearly, we have improved upon the proposal in the following ways: 
+
+\begin{enumerate}
+ \item We have changed a lot of definitions, realizing that the earlier characterizations were unsound, or far from complete, or completely wrong.
+ Specific differences have not been pointed out for the sake of conciseness
+ \item We have also implemented an algorithm for checking CPS expressions, thus enabling us to check for robustness of the tool.
+\end{enumerate}
