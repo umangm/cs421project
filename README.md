@@ -3,24 +3,21 @@ Usage
 
 1.
 
-Go into 'cs421project/tailrec'
-
 Run command 'make'
 
 2.
 
-Go into 'cs421project/tailrecCPS'
+Execute './tailRecPicoMLInt' to open interactive console. 
+Enter PicoML function into the console to see whether it is tail-recursive, in direct style and after transformed into CPS.  
 
-Run command 'make'
+If you only want to see whether it is tail-recursive in direct style, 
+execute './tailRecPicoMLInt -d' instead.  
+
+If you only want to see whether it is tail-recursive after transformed into CPS, 
+execute './tailRecPicoMLInt -c' instead.  
 
 3.
-
-Go into 'cs421project'
-
-Run command 'python match_test.py'
+[Optional] To add more test cases, add new lines in the file 'testing.txt'
 
 4.
-
-Two files will be generated: 'tailrec_result.txt' and 'tailrecCPS_result.txt'. 
-
-Their difference will be printed out in stdout
+Execute './tailRecPicoMLTest' to see test result
