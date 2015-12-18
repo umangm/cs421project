@@ -2,11 +2,9 @@
 Usage
 
 1.
-
 Run command 'make'
 
 2.
-
 Execute './tailRecPicoMLInt' to open interactive console. 
 Enter PicoML function into the console to see whether it is tail-recursive, in direct style and after transformed into CPS.  
 
